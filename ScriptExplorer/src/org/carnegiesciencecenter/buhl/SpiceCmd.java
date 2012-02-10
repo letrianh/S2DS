@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
  *
  */
 enum SpiceCmdTypes {
-	STOP, RUN, COMMENT, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, SELECT_SOURCE, OTHER, UNKNOWN
+	STOP, RUN, COMMENT, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
 }
 
 
@@ -31,6 +31,8 @@ public class SpiceCmd {
 	String wholeLine;
 	static String extraInfo = ""; // actually not a good solution
 	DsCmd dsEquiv;
+	int currentTapeValue = 0;
+	boolean currentTapeRunning = false;
 	
 	int VSRC_positions[] = new int [8];
 	
@@ -56,7 +58,12 @@ public class SpiceCmd {
 		if (!st.hasMoreTokens())
 			return;
 		action = st.nextToken();
-		type = SpiceCmdTypes.OTHER;
+		if (action.startsWith("'TIME_DEBUG")) {
+			type = SpiceCmdTypes.TIME_DEBUG;
+			return;
+		}
+		else
+			type = SpiceCmdTypes.OTHER;
 		
 		if (action.startsWith("'")) { // this is a comment line
 			type = SpiceCmdTypes.COMMENT;
@@ -136,6 +143,8 @@ public class SpiceCmd {
 		dsEquiv = new DsCmd("",0);
 		dsEquiv.timeBegin = this.timeBegin;
 		dsEquiv.superOrder = this.sectionNum;
+		dsEquiv.currentTapeValue = this.currentTapeValue;
+		dsEquiv.currentTapeRunning = this.currentTapeRunning;
 		if (type == SpiceCmdTypes.COMMENT) {
 			dsEquiv.wholeLine = formatComment(commentAbove);
 			dsEquiv.type = DsCmdTypes.COMMENT;
@@ -148,10 +157,14 @@ public class SpiceCmd {
 			dsEquiv.wholeLine = "\n";
 			dsEquiv.type = DsCmdTypes.SPICESTOP;
 		}
+		else if (type == SpiceCmdTypes.TIME_DEBUG) {
+			dsEquiv.wholeLine = "'TIME_DEBUG\n";
+			dsEquiv.type = DsCmdTypes.TIME_DEBUG;
+		}
 		else if (type == SpiceCmdTypes.RUN) {
 			dsEquiv.wholeLine = "\n\n\n'ButtonText \"ADD LABEL HERE\"" + 
 								"\n\nSTOP\n\n" +
-								";======================STOPPED=========================";
+								";========STOPPED========";
 			dsEquiv.type = DsCmdTypes.STOP;
 			dsEquiv.action = "STOP";
 		}

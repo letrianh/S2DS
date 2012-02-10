@@ -332,18 +332,29 @@ public class ScriptExplorer {
 			+ String.format("+%4.2f\n", t);
 	}
 	
+	String formatTimeDebug(int t) {
+		int h, m, s;
+		h = t / (60*60*100);
+		t -= h*(60*60*100);
+		m = t / (60*100);
+		t -= m*(60*100);
+		s = t/100;
+		t -= s*100;
+		return String.format("%02d:%02d:%02d.%02d", h, m, s, t);
+	}
+	
 	int convert() {
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
 		allCmds = new ArrayList<DsCmd>();
-		allCmds.add(new DsCmd(0,	";============================================\n" + 
+		allCmds.add(new DsCmd(0,	";======================================================================\n" + 
 									"\t;PUT ADDITIONAL \"Text Add\" HERE. MAY NEED SOME DELAY AFTER THAT.\n" +
-									"\t;--------------------------------------------\n" +
+									"\t;----------------------------------------------------------------------\n" +
 									"\t Jbox1 Add \"audio\" \""+ SoundFileName +"\" \n" +
 									"\t Jbox1 Volume \"audio\" 0 100 \n" +
 									"+0.2\n" +
-									"\t;--------------------------------------------\n\n\n",0));
-		allCmds.add(new DsCmd(0,	";============================================\n", 0));
+									"\t;----------------------------------------------------------------------\n\n\n",0));
+		allCmds.add(new DsCmd(0,	";======================================================================\n", 0));
 		Iterator<SpiceCmd> itr = spiceScript.commands.iterator();
 		boolean flag = false;
 	    while(itr.hasNext()) {
@@ -353,6 +364,8 @@ public class ScriptExplorer {
 	    		String scriptId = c.numericParam;
 	    		int scriptSection = c.sectionNum;
 	    		int loadPoint = c.timeBegin;
+	    		int tapePoint = c.currentTapeValue;
+	    		boolean tapeRunning = c.currentTapeRunning;
 	    		boolean recursive = true;
 	    		while (recursive) {
 		    		DsScript s = ds.get(DsScript.numberToId(scriptId));
@@ -361,15 +374,16 @@ public class ScriptExplorer {
 		    			return 1;
 		    		}
 		    		int curSec = s.currentSection;
-		    		allCmds.add(new DsCmd(loadPoint,	";============================================\n" + 
-		    											String.format("\t;BEGIN OF %s part %d\n", scriptId, curSec) +
-		    											"\t;--------------------------------------------\n", scriptSection));
-		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection));
+		    		int totalSec = s.sectionNum;
+		    		allCmds.add(new DsCmd(loadPoint,	";======================================================================\n" + 
+		    											String.format("\t;BEGIN OF %s part %d/%d\n", scriptId, curSec+1, totalSec) +
+		    											"\t;----------------------------------------------------------------------\n", scriptSection));
+		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection,tapePoint, tapeRunning));
 		    		DsCmd last = allCmds.get(allCmds.size()-1);
 		    		allCmds.add(new DsCmd(last.timeBegin,
-		    											";--------------------------------------------\n" + 
-		    											String.format("\t;END OF %s part %d\n", scriptId,  curSec) +
-														"\t;============================================\n", scriptSection));
+		    											";------------------------------------------------------------------------\n" + 
+		    											String.format("\t;END OF %s part %d/%d\n", scriptId,  curSec+1, totalSec) +
+														"\t;====================================================================\n", scriptSection));
 		    		if (s.loadNextButton) {
 		    			scriptId = Integer.toString(Integer.parseInt(scriptId)+1);
 		    			loadPoint = s.loadTime;
@@ -416,9 +430,18 @@ public class ScriptExplorer {
 			    else
 			    	queue += timeDiff;
 	    	}
-	    	if (c.type != DsCmdTypes.WAIT) {
+
+	    	if (c.type == DsCmdTypes.TIME_DEBUG)
+	    		c.wholeLine = String.format("'TIME_DEBUG: Time-since-last-STOP = %s\tTape-value = %s\tTape-status = %s\n", 
+	    				formatTimeDebug(c.timeBegin), formatTimeDebug(c.currentTapeValue), (c.currentTapeRunning?"PLAYED":"STOPPED"));
+
+	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
+	    		//uncomment this line to debug
 	    		//sb.append(String.format("%2d # %6d # %2d ", c.superOrder, c.timeBegin, c.order));
-	    		sb.append("\t" + c.wholeLine + "\n");
+	    		if (c.type == DsCmdTypes.OTHERWAIT)
+	    			sb.append("\t" + c.removeDelay() + "\n");
+	    		else
+	    			sb.append("\t" + c.wholeLine + "\n");
 	    	}
 	    	oldTime = c.timeBegin;
 	    }

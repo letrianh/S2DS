@@ -34,6 +34,7 @@ public class SpiceScript {
 
 	int tapeValue = 0;
 	int tapeStartPoint;
+	boolean tapeRunning = false;
 	int clock = 0;
 	int sectionNum = 0;
 	String interactiveChannel;
@@ -207,13 +208,22 @@ public class SpiceScript {
 								}
 
 							boolean adjustClock = true;
-							// we also consider delay for comments
+							// uncomment this block if dont want to delay at COMMENT or EMPTY
 //							if (c.type == SpiceCmdTypes.COMMENT || c.type == SpiceCmdTypes.EMPTY)
 //								if (c.timecode.startsWith("+00:00:00.05"))
 //									adjustClock = false;
 							if (adjustClock)
 								loadTimecode(c.timecode);
 							c.setExecTime(clock);
+							
+							// update currentTapeValue for this SPICE command, for TIME_DEBUG
+							c.currentTapeRunning = tapeRunning;
+							if (tapeRunning) {
+								c.currentTapeValue = (clock - tapeStartPoint) + tapeValue;
+							}
+							else {
+								c.currentTapeValue = tapeValue;
+							}
 
 							commands.add(c);
 							
@@ -222,12 +232,26 @@ public class SpiceScript {
 							}
 							
 							if (c.type == SpiceCmdTypes.TAPE_PLAY) {
-								tapeStartPoint = clock;
+								if (!tapeRunning) {
+									tapeStartPoint = clock;
+									tapeRunning = true;
+								} 
+								else {
+									c.type = SpiceCmdTypes.COMMENT;
+									c.wholeLine = "'IGNORED: " + c.wholeLine;
+								}
 							}
 							
 							if (c.type == SpiceCmdTypes.TAPE_PAUSE) {
-								tapeValue += (clock-tapeStartPoint);
-								tapeStartPoint = clock;
+								if (tapeRunning) {
+									tapeValue += (clock-tapeStartPoint);
+									tapeStartPoint = clock;
+									tapeRunning = false;
+								}
+								else {
+									c.type = SpiceCmdTypes.COMMENT;
+									c.wholeLine = "'IGNORED: " + c.wholeLine;
+								}
 							}
 							
 							if (c.type == SpiceCmdTypes.SELECT_SOURCE) {
