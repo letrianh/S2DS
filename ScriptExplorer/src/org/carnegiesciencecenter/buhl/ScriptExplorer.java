@@ -328,8 +328,8 @@ public class ScriptExplorer {
 	}
 	
 	String formatWaitTime(double t) {
-		return String.format("'\tWait %d minutes %4.2f seconds\n",(int)Math.floor(t/60),t-(Math.floor(t/60))*60)
-			+ String.format("+%4.2f\n", t);
+		//return String.format("'\tWait %d minutes %4.2f seconds\n",(int)Math.floor(t/60),t-(Math.floor(t/60))*60) + String.format("+%4.2f\n", t);
+		return String.format("+%4.2f\n", t);
 	}
 	
 	String formatTimeDebug(int t) {
@@ -381,7 +381,7 @@ public class ScriptExplorer {
 		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection,tapePoint, tapeRunning));
 		    		DsCmd last = allCmds.get(allCmds.size()-1);
 		    		allCmds.add(new DsCmd(last.timeBegin,
-		    											";------------------------------------------------------------------------\n" + 
+		    											";----------------------------------------------------------------------\n" + 
 		    											String.format("\t;END OF %s part %d/%d\n", scriptId,  curSec+1, totalSec) +
 														"\t;====================================================================\n", scriptSection));
 		    		if (s.loadNextButton) {
@@ -419,7 +419,6 @@ public class ScriptExplorer {
 	    while(it.hasNext()) {
 	    	DsCmd c = it.next();
 	    	double timeDiff = (c.timeBegin - oldTime);
-	    	//if (timeDiff > 0.05 || c.type == DsCmdTypes.WAIT || c.type == DsCmdTypes.OTHERWAIT) {
 	    	if (timeDiff + queue > 0) {
 	    		if (c.type != DsCmdTypes.COMMENT && c.type != DsCmdTypes.EMPTY) {
 	    			timeDiff += queue;
@@ -438,7 +437,7 @@ public class ScriptExplorer {
 	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
 	    		//uncomment this line to debug
 	    		//sb.append(String.format("%2d # %6d # %2d ", c.superOrder, c.timeBegin, c.order));
-	    		if (c.type == DsCmdTypes.OTHERWAIT)
+	    		if (c.waitTime.length() != 0)
 	    			sb.append("\t" + c.removeDelay() + "\n");
 	    		else
 	    			sb.append("\t" + c.wholeLine + "\n");

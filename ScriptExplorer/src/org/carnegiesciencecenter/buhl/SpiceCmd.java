@@ -164,7 +164,7 @@ public class SpiceCmd {
 		else if (type == SpiceCmdTypes.RUN) {
 			dsEquiv.wholeLine = "\n\n\n'ButtonText \"ADD LABEL HERE\"" + 
 								"\n\nSTOP\n\n" +
-								";========STOPPED========";
+								";========STOPPED========\n\n\n";
 			dsEquiv.type = DsCmdTypes.STOP;
 			dsEquiv.action = "STOP";
 		}

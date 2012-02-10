@@ -3,7 +3,15 @@ package org.carnegiesciencecenter.buhl;
 import java.util.StringTokenizer;
 
 enum DsCmdTypes {
-	STOP, SPICESTOP, COMMENT, EMPTY, WAIT, NEXT, OTHER, OTHERWAIT, TIME_DEBUG
+	STOP,		// DS Stop 
+	SPICESTOP,	// translated from SPICE Stop
+	COMMENT,	// started with ' or ;
+	EMPTY,		// emtpy line
+	WAIT,		// containning only + and wait time
+	NEXT,		// Show Next
+	OTHER,		// regular commands
+	//OTHERWAIT,	// wait time AND some command
+	TIME_DEBUG
 }
 
 public class DsCmd implements Comparable<DsCmd> {
@@ -20,6 +28,7 @@ public class DsCmd implements Comparable<DsCmd> {
 	boolean currentTapeRunning;
 	
 	DsCmd(int runTime, String comment, int o) {
+		waitTime = "";
 		if (comment.length() != 0) {
 			type = DsCmdTypes.COMMENT;
 			timeBegin = runTime;
@@ -60,6 +69,16 @@ public class DsCmd implements Comparable<DsCmd> {
 		if (!st.hasMoreTokens())
 			return;
 		
+		// check if we need delay
+		if (line.startsWith("+")) {
+			waitTime = st.nextToken();
+			if (!st.hasMoreTokens()) { 
+				type = DsCmdTypes.WAIT;
+				return;
+			}
+		}
+		
+		// check if it is a comment 
 		if (line.startsWith(";") || line.startsWith("'")) {
 			if (line.startsWith("'TIME_DEBUG")) {
 				type = DsCmdTypes.TIME_DEBUG;
@@ -68,17 +87,8 @@ public class DsCmd implements Comparable<DsCmd> {
 			else
 				type = DsCmdTypes.COMMENT;
 		}
-		else if (line.startsWith("+")) {
-			waitTime = st.nextToken();
-			if (st.hasMoreTokens()) 
-				type = DsCmdTypes.OTHERWAIT;
-			else {
-				type = DsCmdTypes.WAIT;
-				return;
-			}
-		}
 		else
-			type = DsCmdTypes.OTHER;
+			type = DsCmdTypes.OTHER;	// type can be changed to STOP or NEXT. See below.
 		
 		category = st.nextToken().toUpperCase();
 		if (category.startsWith("STOP")) {
