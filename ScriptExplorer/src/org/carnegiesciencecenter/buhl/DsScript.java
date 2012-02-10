@@ -33,6 +33,7 @@ public class DsScript {
 	ArrayList<Integer> stopPositions;
 	ArrayList<DsCmd> commands;
 	boolean loadNextButton;
+	int loadTime;
 	boolean reachedTheEnd = false;
 	String uniqueCmds;
 	
@@ -60,10 +61,15 @@ public class DsScript {
 		else
 			idxEnd = commands.size() - 1;
 		
+		this.loadNextButton = false;
 		while (idxBegin <= idxEnd) {
 			DsCmd c = new DsCmd(commands.get(idxBegin));
 			c.setSectionBeginTime(timePoint);
 			c.setSuperOrder(superOrder);
+			if (c.type == DsCmdTypes.NEXT) {
+				this.loadTime = c.timeBegin;
+				this.loadNextButton = true;
+			}
 			list.add(c);
 			idxBegin++;
 		}
@@ -188,8 +194,9 @@ public class DsScript {
 							System.out.println("SecNum = " + Integer.toString(sectionNum));
 						}
 						
-						if (c.type == DsCmdTypes.NEXT)
+						if (c.type == DsCmdTypes.NEXT) {
 							loadNextButton = true;
+						}
 						
 						//String CatAc = c.category + "-" + c.action.toUpperCase();
 						String CatAc = c.category;

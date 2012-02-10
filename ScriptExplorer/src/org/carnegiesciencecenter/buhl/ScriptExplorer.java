@@ -143,6 +143,7 @@ public class ScriptExplorer {
 		}
 		catch (Exception e) {
 			System.out.println("Cannot open soure/dest path.");
+			e.printStackTrace();
 			return;
 		}
 		
@@ -162,7 +163,7 @@ public class ScriptExplorer {
 			startNum = 1;
 		else {
 			if (newPage)
-				startNum = (int) (Math.floor(((double)max-1)/(8*12)) + 1)*(8*12);
+				startNum = (int) (Math.floor(((double)max-1)/(8*12)) + 1)*(8*12) + 1;
 			else
 				startNum = max + 1;
 		}
@@ -340,8 +341,6 @@ public class ScriptExplorer {
 									"\t;--------------------------------------------\n" +
 									"\t Jbox1 Add \"audio\" \""+ SoundFileName +"\" \n" +
 									"\t Jbox1 Volume \"audio\" 0 100 \n" +
-									"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
-									"\t Text Locate \"clip\" 0 0 40 0 48 36\n" +
 									"+0.2\n" +
 									"\t;--------------------------------------------\n\n\n",0));
 		allCmds.add(new DsCmd(0,	";============================================\n", 0));
@@ -353,6 +352,7 @@ public class ScriptExplorer {
 	    	if (c.type == SpiceCmdTypes.RUNSCRIPT) {
 	    		String scriptId = c.numericParam;
 	    		int scriptSection = c.sectionNum;
+	    		int loadPoint = c.timeBegin;
 	    		boolean recursive = true;
 	    		while (recursive) {
 		    		DsScript s = ds.get(DsScript.numberToId(scriptId));
@@ -361,17 +361,19 @@ public class ScriptExplorer {
 		    			return 1;
 		    		}
 		    		int curSec = s.currentSection;
-		    		allCmds.add(new DsCmd(c.timeBegin,	";============================================\n" + 
+		    		allCmds.add(new DsCmd(loadPoint,	";============================================\n" + 
 		    											String.format("\t;BEGIN OF %s part %d\n", scriptId, curSec) +
 		    											"\t;--------------------------------------------\n", scriptSection));
-		    		allCmds.addAll(s.runNextAt(c.timeBegin,scriptSection));
+		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection));
 		    		DsCmd last = allCmds.get(allCmds.size()-1);
 		    		allCmds.add(new DsCmd(last.timeBegin,
 		    											";--------------------------------------------\n" + 
 		    											String.format("\t;END OF %s part %d\n", scriptId,  curSec) +
 														"\t;============================================\n", scriptSection));
-		    		if (s.loadNextButton && s.reachedTheEnd)
+		    		if (s.loadNextButton) {
 		    			scriptId = Integer.toString(Integer.parseInt(scriptId)+1);
+		    			loadPoint = s.loadTime;
+		    		}
 		    		else
 		    			recursive = false;
 	    		}

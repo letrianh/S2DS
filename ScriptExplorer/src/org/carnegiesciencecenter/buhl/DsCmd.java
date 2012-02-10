@@ -79,8 +79,10 @@ public class DsCmd implements Comparable<DsCmd> {
 		}
 		if (st.hasMoreElements())
 			action = st.nextToken().toUpperCase();
-		if (category.startsWith("SHOW") && action.startsWith("NEXT"))
+		if (category.startsWith("SHOW") && action.startsWith("NEXT")) {
 			type = DsCmdTypes.NEXT;
+			wholeLine = "'REMOVED:" + wholeLine;
+		}
 	}
 	
 	void setSectionBeginTime(int v) {

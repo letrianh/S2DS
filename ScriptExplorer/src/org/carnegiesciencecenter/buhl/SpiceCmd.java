@@ -149,7 +149,9 @@ public class SpiceCmd {
 			dsEquiv.type = DsCmdTypes.SPICESTOP;
 		}
 		else if (type == SpiceCmdTypes.RUN) {
-			dsEquiv.wholeLine = "STOP\n";
+			dsEquiv.wholeLine = "\n\n\n'ButtonText \"ADD LABEL HERE\"" + 
+								"\n\nSTOP\n\n" +
+								";======================STOPPED=========================";
 			dsEquiv.type = DsCmdTypes.STOP;
 			dsEquiv.action = "STOP";
 		}
@@ -170,9 +172,17 @@ public class SpiceCmd {
 			
 			// for VPRJ
 			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
-				if (action.toUpperCase().startsWith("FADE") && channelName.contains(extraInfo))
-					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
+				if (action.toUpperCase().startsWith("FADE") && channelName.contains(extraInfo)) {
+					if (!this.numericParam.startsWith("0")) {
+						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
+												"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
+												"\t Text Locate \"clip\" 0 0 40 0 48 36\n" +
+								String.format(	"\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
+					}
+					else
+						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
 							String.format("\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
+				}
 				else
 					dsEquiv.wholeLine = formatOld();
 			}
