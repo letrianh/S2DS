@@ -69,8 +69,9 @@ public class DsScript {
 				c.setCurrentTapeValue(tapePoint + c.timeBegin);
 			else
 				c.setCurrentTapeValue(tapePoint);
-			c.setSectionBeginTime(timePoint);
+			c.addToExecTime(timePoint);
 			c.setSuperOrder(superOrder);
+			
 			if (c.type == DsCmdTypes.NEXT) {
 				this.loadTime = c.timeBegin;	// load time for this Show Next
 				this.loadNextButton = true;

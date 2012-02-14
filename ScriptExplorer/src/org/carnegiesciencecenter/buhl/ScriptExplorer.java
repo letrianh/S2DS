@@ -41,6 +41,7 @@ public class ScriptExplorer {
 	ArrayList<String> usedNames;
 	File newSetPath;
 	String[] pageNames = {"1","2","3","4","5","6","7","8","9"};
+	HashMap<String,CmdNode> allNodes;
 	int buttonStartNum;
 	
 	ScriptExplorer() {
@@ -109,8 +110,9 @@ public class ScriptExplorer {
 	}
 	
 	int LoadSPICEfile() {
+		allNodes = new HashMap<String,CmdNode>();
 		spiceScript = new SpiceScript(spiceFile);
-		spiceScript.parseSPICE();
+		spiceScript.parseSPICE(allNodes);
 		updateUsage();
 		return 0;		
 	}
@@ -332,17 +334,6 @@ public class ScriptExplorer {
 		return String.format("+%4.2f\n", t);
 	}
 	
-	String formatTimeDebug(int t) {
-		int h, m, s;
-		h = t / (60*60*100);
-		t -= h*(60*60*100);
-		m = t / (60*100);
-		t -= m*(60*100);
-		s = t/100;
-		t -= s*100;
-		return String.format("%02d:%02d:%02d.%02d", h, m, s, t);
-	}
-	
 	int convert() {
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
@@ -353,8 +344,7 @@ public class ScriptExplorer {
 									"\t Jbox1 Add \"audio\" \""+ SoundFileName +"\" \n" +
 									"\t Jbox1 Volume \"audio\" 0 100 \n" +
 									"+0.2\n" +
-									"\t;----------------------------------------------------------------------\n\n\n",0));
-		allCmds.add(new DsCmd(0,	";======================================================================\n", 0));
+									"\t;======================================================================\n\n\n",0));
 		Iterator<SpiceCmd> itr = spiceScript.commands.iterator();
 		boolean flag = false;
 	    while(itr.hasNext()) {
@@ -376,14 +366,14 @@ public class ScriptExplorer {
 		    		int curSec = s.currentSection;
 		    		int totalSec = s.sectionNum;
 		    		allCmds.add(new DsCmd(loadPoint,	";======================================================================\n" + 
-		    											String.format("\t;BEGIN OF %s part %d/%d\n", scriptId, curSec+1, totalSec) +
+		    											String.format("\t;BEGIN OF %s part %d/%d\n", scriptId, curSec+1, totalSec+1) +
 		    											"\t;----------------------------------------------------------------------\n", scriptSection));
 		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection,tapePoint, tapeRunning));
 		    		DsCmd last = allCmds.get(allCmds.size()-1);
 		    		allCmds.add(new DsCmd(last.timeBegin,
 		    											";----------------------------------------------------------------------\n" + 
-		    											String.format("\t;END OF %s part %d/%d\n", scriptId,  curSec+1, totalSec) +
-														"\t;====================================================================\n", scriptSection));
+		    											String.format("\t;END OF %s part %d/%d\n", scriptId,  curSec+1, totalSec+1) +
+														"\t;======================================================================\n", scriptSection));
 		    		if (s.loadNextButton) {
 		    			scriptId = Integer.toString(Integer.parseInt(scriptId)+1);
 		    			loadPoint = s.loadTime;
@@ -411,6 +401,31 @@ public class ScriptExplorer {
 	    	c.setOrder(k);
 	    }
 	    Collections.sort(allCmds);
+
+	    // now adjust time
+	    int delta = 0;
+	    for (int k=0; k<allCmds.size(); k++) {
+	    	DsCmd c = allCmds.get(k);
+	    	if (c.type != DsCmdTypes.SPICESTOP) {
+				if (delta > 0) {
+					c.addToExecTime(delta);
+					c.addToCurrentTapeValue(delta);
+				}
+				if (c.type == DsCmdTypes.TIME_ADJUST) {
+					int localDelta = SpiceScript.timeValue(c.action) - c.currentTapeValue;
+					if (localDelta < 0)
+						c.wholeLine += String.format(" OLD TAPE VALUE: %s, NEGATIVE DELTA NOT ADDED: %d\n", 
+								SpiceScript.timeString(c.currentTapeValue), localDelta);
+					else if (localDelta > 0) {
+						c.wholeLine += String.format(" OLD TAPE VALUE: %s, ADDED: %.2f\n", 
+								SpiceScript.timeString(c.currentTapeValue), ((double)delta)/100);
+						delta += localDelta;
+					}
+				}
+	    	}
+	    	else	// adjust only cmds before a STOP
+	    		delta = 0;
+	    }
 	    
 		Iterator<DsCmd> it = allCmds.iterator();
 	    int oldTime = 0;
@@ -418,6 +433,8 @@ public class ScriptExplorer {
 		double queue = 0;
 	    while(it.hasNext()) {
 	    	DsCmd c = it.next();
+	    	if (c.type == DsCmdTypes.SPICESTOP)	// the STOP command was assigned a large exec time to make sure it happens at the end of block
+	    		c.timeBegin = oldTime;
 	    	double timeDiff = (c.timeBegin - oldTime);
 	    	if (timeDiff + queue > 0) {
 	    		if (c.type != DsCmdTypes.COMMENT && c.type != DsCmdTypes.EMPTY) {
@@ -430,17 +447,21 @@ public class ScriptExplorer {
 			    	queue += timeDiff;
 	    	}
 
-	    	if (c.type == DsCmdTypes.TIME_DEBUG)
-	    		c.wholeLine = String.format("'TIME_DEBUG: Time-since-last-STOP = %s\tTape-value = %s\tTape-status = %s\n", 
-	    				formatTimeDebug(c.timeBegin), formatTimeDebug(c.currentTapeValue), (c.currentTapeRunning?"PLAYED":"STOPPED"));
+	    	//if (c.type == DsCmdTypes.TIME_DEBUG)
+	    	//	c.wholeLine = String.format("\n'TIME_DEBUG: Time-since-last-STOP = %s\tTape-value = %s\tTape-status = %s\n\n", 
+	    	//			formatTimeDebug(c.timeBegin), formatTimeDebug(c.currentTapeValue), (c.currentTapeRunning?"PLAYED":"STOPPED"));
 
 	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
 	    		//uncomment this line to debug
-	    		//sb.append(String.format("%2d # %6d # %2d ", c.superOrder, c.timeBegin, c.order));
+	    		sb.append(String.format("\t\t\t\t\t\t\t'BLOCK = %2d  t = %6d  # = %2d  iCLK = %s  TAPE = %s  RUN = %s\n",
+	    				c.superOrder, c.timeBegin, c.order,
+	    				SpiceScript.timeString(c.timeBegin), SpiceScript.timeString(c.currentTapeValue), (c.currentTapeRunning?"Y":"N")));
+	    		String finalText;
 	    		if (c.waitTime.length() != 0)
-	    			sb.append("\t" + c.removeDelay() + "\n");
+	    			finalText = c.removeDelay().trim();
 	    		else
-	    			sb.append("\t" + c.wholeLine + "\n");
+	    			finalText = c.wholeLine.trim();
+    			sb.append("\t" + (c.isNative ? "" : "\t\t") + finalText + "\n");
 	    	}
 	    	oldTime = c.timeBegin;
 	    }

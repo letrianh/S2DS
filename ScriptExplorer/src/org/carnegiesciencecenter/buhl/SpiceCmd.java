@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
  *
  */
 enum SpiceCmdTypes {
-	STOP, RUN, COMMENT, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
+	STOP, RUN, COMMENT, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, TAPE_JUMP, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
 }
 
 
@@ -21,6 +21,7 @@ public class SpiceCmd {
 	int sectionNum;
 	int timeBegin, timeDuration;
 	String commentAbove, commentBelow;
+	int timeDelay;
 	String timecode;
 	String duration;
 	String action;
@@ -60,6 +61,10 @@ public class SpiceCmd {
 		action = st.nextToken();
 		if (action.startsWith("'TIME_DEBUG")) {
 			type = SpiceCmdTypes.TIME_DEBUG;
+			return;
+		}
+		else if (action.startsWith("'TAPE_JUMP:")) {
+			type = SpiceCmdTypes.TAPE_JUMP;
 			return;
 		}
 		else
@@ -141,6 +146,7 @@ public class SpiceCmd {
 	
 	int translate() {
 		dsEquiv = new DsCmd("",0);
+		dsEquiv.isNative = false;
 		dsEquiv.timeBegin = this.timeBegin;
 		dsEquiv.superOrder = this.sectionNum;
 		dsEquiv.currentTapeValue = this.currentTapeValue;
@@ -153,20 +159,25 @@ public class SpiceCmd {
 			dsEquiv.wholeLine = "\n";
 			dsEquiv.type = DsCmdTypes.EMPTY;
 		}
-		else if (type == SpiceCmdTypes.STOP) {
-			dsEquiv.wholeLine = "\n";
-			dsEquiv.type = DsCmdTypes.SPICESTOP;
+		else if (type == SpiceCmdTypes.RUN) {
+			dsEquiv.wholeLine = formatOld();;
+			dsEquiv.type = DsCmdTypes.OTHER;
 		}
 		else if (type == SpiceCmdTypes.TIME_DEBUG) {
 			dsEquiv.wholeLine = "'TIME_DEBUG\n";
 			dsEquiv.type = DsCmdTypes.TIME_DEBUG;
 		}
-		else if (type == SpiceCmdTypes.RUN) {
+		else if (type == SpiceCmdTypes.TAPE_JUMP) {	// ex: 'TAPE_JUMP:01:05:40.45
+			dsEquiv.wholeLine = String.format("Jbox1 Goto \"audio\" %6.2f\n", ((double)SpiceScript.timeValue("00"+action.substring(13,22)))/100);
+			dsEquiv.type = DsCmdTypes.OTHER;
+		}
+		else if (type == SpiceCmdTypes.STOP) {
 			dsEquiv.wholeLine = "\n\n\n'ButtonText \"ADD LABEL HERE\"" + 
 								"\n\nSTOP\n\n" +
 								";========STOPPED========\n\n\n";
-			dsEquiv.type = DsCmdTypes.STOP;
+			dsEquiv.type = DsCmdTypes.SPICESTOP;
 			dsEquiv.action = "STOP";
+			dsEquiv.timeBegin = 1000*60*60*100;	// use a big constant to make sure that STOP happens after everything else   
 		}
 		else {
 			//dsEquiv.wholeLine = formatComment(commentAbove) + action + "\n" + formatComment(commentBelow);
@@ -254,7 +265,8 @@ public class SpiceCmd {
 //		}
 //	}
 	
-	void setExecTime(int v) {
+	void setExecTime(int v, int oldClock) {
 		timeBegin = v;
+		timeDelay = v - oldClock;
 	}
 }

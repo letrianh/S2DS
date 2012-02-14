@@ -6,63 +6,67 @@ enum DsCmdTypes {
 	STOP,		// DS Stop 
 	SPICESTOP,	// translated from SPICE Stop
 	COMMENT,	// started with ' or ;
-	EMPTY,		// emtpy line
-	WAIT,		// containning only + and wait time
+	EMPTY,		// empty line
+	WAIT,		// containing only + and wait time
 	NEXT,		// Show Next
 	OTHER,		// regular commands
-	//OTHERWAIT,	// wait time AND some command
-	TIME_DEBUG
+	TIME_DEBUG,	// fake command 'TIME_DEBUG
+	TIME_ADJUST	// fake command '@
 }
 
 public class DsCmd implements Comparable<DsCmd> {
-	static final int DEFAULT_DURATION = 0;
 	DsCmdTypes type;
-	int sectionNum;
-	int timeBegin, timeDuration;
-	int order;
-	int superOrder;
-	String waitTime;
-	String wholeLine;
-	String category, action;
-	int currentTapeValue;
-	boolean currentTapeRunning;
+	int sectionNum;					// Which section (defined by STOP) the command belongs to. Start with 0.
+	int timeBegin;					// Time from the beginning of the script
+	String waitTime;				// Delay time specified with leading "+". If not specified, MUST be ""
+	String wholeLine;				// Original line from script file
+	String category;				// Command group, for ex. Text
+	String action;					// Command action, for ex. View
+	int order;						// Order in which cmd was added. Used for sorting commands
+	int superOrder;					// Order inherited from SPICE
+	int currentTapeValue;			// DA-88 tape position when this cmd is executed
+	boolean currentTapeRunning;		// Status of the tape
+	boolean isNative = true;				// This cmd is from DS file or was translated from SPICE
 	
+	// This constructor is used only when we need to insert COMMENT or EMPTY line to the generated script
 	DsCmd(int runTime, String comment, int o) {
 		waitTime = "";
+		timeBegin = runTime;
+		action = "";
+		superOrder = o;
 		if (comment.length() != 0) {
 			type = DsCmdTypes.COMMENT;
-			timeBegin = runTime;
-			action = "";
 			wholeLine = comment;
-			superOrder = o;
 		} 
 		else {
 			type = DsCmdTypes.EMPTY;
-			timeBegin = runTime;
-			action = "";
 			wholeLine = "\n";
-			superOrder = o;
 		}
 	}
 	
+	// Copy constructor
 	DsCmd(DsCmd c) {
 		type = c.type;
 		sectionNum = c.sectionNum;
 		timeBegin = c.timeBegin;
-		timeDuration = c.timeDuration;
 		waitTime = c.waitTime;
 		wholeLine = c.wholeLine;
 		category = c.category;
 		action = c.action;
+		order = c.order;
 		superOrder = c.superOrder;
+		currentTapeValue = c.currentTapeValue;
+		currentTapeRunning = c.currentTapeRunning;
 	}
 	
+	// Standard constructor. Called when the script file is read the first time.
+	// At this point, we have no idea about currentTapeValue, currentTapeRunning, or timeBegin
 	DsCmd(String line, int secNum) {
-		wholeLine = line;
-		line = line.trim();
+		type = DsCmdTypes.EMPTY;
 		sectionNum = secNum;
 		waitTime = "";
-		type = DsCmdTypes.EMPTY;
+		wholeLine = line;
+		line = line.trim();
 		category = "";
 		action = "";
 		StringTokenizer st = new StringTokenizer(line, " +\t\n");
@@ -84,6 +88,11 @@ public class DsCmd implements Comparable<DsCmd> {
 				type = DsCmdTypes.TIME_DEBUG;
 				return;
 			}
+			else if (line.startsWith("'@")) {	// ex: '@01:23:45.67
+				type = DsCmdTypes.TIME_ADJUST;
+				action = line.substring(2, 13);
+				return;
+			}
 			else
 				type = DsCmdTypes.COMMENT;
 		}
@@ -103,7 +112,7 @@ public class DsCmd implements Comparable<DsCmd> {
 		}
 	}
 	
-	void setSectionBeginTime(int v) {
+	void addToExecTime(int v) {
 		timeBegin += v;
 	}
 
@@ -117,6 +126,10 @@ public class DsCmd implements Comparable<DsCmd> {
 
 	void setSuperOrder(int o) {
 		superOrder = o;
+	}
+
+	void addToCurrentTapeValue(int v) {
+		currentTapeValue += v;
 	}
 
 	void setCurrentTapeValue(int t) {

@@ -269,7 +269,7 @@ public class MainWindow extends JFrame implements ActionListener {
         	}
         }
         else if (e.getSource() == exploreMI) {
-            	new TimelineWindow();
+            	new TimelineWindow(se);
         }
     }
 

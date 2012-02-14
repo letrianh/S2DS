@@ -13,6 +13,7 @@ import java.io.StringReader;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -48,11 +49,11 @@ public class SpiceScript {
 		return clock;
 	}
 
-	int timeValue(int h, int m, int s, int ms) {
+	static int timeValue(int h, int m, int s, int ms) {
 		return (ms + 100*(s+60*(m+60*h)));
 	}
 	
-	int timeValue(String timecode) {
+	static int timeValue(String timecode) {
 		if (timecode.length()==8)
 			timecode = "00:" + timecode;
 		else if (timecode.length()==7)
@@ -65,17 +66,31 @@ public class SpiceScript {
 		return v;
 	}
 	
-	void loadTimecode(String timecode) {
+	static String timeString(int t) {
+		int h, m, s;
+		h = t / (60*60*100);
+		t -= h*(60*60*100);
+		m = t / (60*100);
+		t -= m*(60*100);
+		s = t/100;
+		t -= s*100;
+		return String.format("%02d:%02d:%02d.%02d", h, m, s, t);
+	}
+		
+	// return true if timecode was an absolute code
+	boolean loadTimecode(String timecode) {
 		boolean relative = timecode.startsWith("+");
 		if (relative) {
 			timecode = timecode.substring(1);
 			addClock(timeValue(timecode));
+			return false;
 		}
 		else {
 			if (timeValue(timecode) < tapeValue)
 				System.out.println("SERIOUS PROBLEM: absolute time is less than current value of the tape");
 			else
 				setClock( (timeValue(timecode) - tapeValue) + tapeStartPoint );
+			return true;
 		}
 	}
 
@@ -157,7 +172,8 @@ public class SpiceScript {
 			return SectionTypes.UNKNOWN;
 	}
 	
-	int parseSPICE() {
+	int parseSPICE(HashMap<String,CmdNode> nodes) {
+		int lineCnt = 0;
 		BufferedReader reader = new BufferedReader(new StringReader(text));
 		String line;
 		LineTypes status;
@@ -165,6 +181,7 @@ public class SpiceScript {
 		setClock(0);
 		try {
 			while ((line = reader.readLine()) != null) {
+				lineCnt++;
 				if (line.length() > 0) {
 					System.out.println(line);
 					status = getLineType(line);
@@ -206,17 +223,15 @@ public class SpiceScript {
 									System.out.println("FOUND RunScript: " + c.numericParam);
 									buttons.add(c.numericParam);
 								}
-
-							boolean adjustClock = true;
-							// uncomment this block if dont want to delay at COMMENT or EMPTY
-//							if (c.type == SpiceCmdTypes.COMMENT || c.type == SpiceCmdTypes.EMPTY)
-//								if (c.timecode.startsWith("+00:00:00.05"))
-//									adjustClock = false;
-							if (adjustClock)
-								loadTimecode(c.timecode);
-							c.setExecTime(clock);
 							
+							int oldClock = clock;
+							boolean absTimeCode;
+							absTimeCode = loadTimecode(c.timecode);
+							c.setExecTime(clock, oldClock);
+							
+					
 							// update currentTapeValue for this SPICE command, for TIME_DEBUG
+							// must be done before we update tapeValue
 							c.currentTapeRunning = tapeRunning;
 							if (tapeRunning) {
 								c.currentTapeValue = (clock - tapeStartPoint) + tapeValue;
@@ -229,6 +244,11 @@ public class SpiceScript {
 							
 							if (c.type == SpiceCmdTypes.TAPE_SEARCH) {
 								tapeValue = timeValue(c.numericParam);
+							}
+							
+							if (c.type == SpiceCmdTypes.TAPE_JUMP) {
+								System.out.println(c.action.substring(11,22));
+								tapeValue = timeValue(c.action.substring(11,22));
 							}
 							
 							if (c.type == SpiceCmdTypes.TAPE_PLAY) {
@@ -245,7 +265,7 @@ public class SpiceScript {
 							if (c.type == SpiceCmdTypes.TAPE_PAUSE) {
 								if (tapeRunning) {
 									tapeValue += (clock-tapeStartPoint);
-									tapeStartPoint = clock;
+									//tapeStartPoint = clock;
 									tapeRunning = false;
 								}
 								else {
@@ -253,6 +273,16 @@ public class SpiceScript {
 									c.wholeLine = "'IGNORED: " + c.wholeLine;
 								}
 							}
+							
+							CmdNode newNode = new CmdNode(lineCnt,c);
+							if (absTimeCode || c.type == SpiceCmdTypes.TAPE_PLAY || c.type == SpiceCmdTypes.TAPE_PAUSE) {
+								CmdNode tapeNode = new CmdNode(c.timeBegin, c.currentTapeValue);
+								if (nodes.get(tapeNode.getNodeId()) == null) {
+									tapeNode.setPointTo(newNode);
+									nodes.put(tapeNode.getNodeId(), tapeNode);
+								}
+							}
+							nodes.put(newNode.getNodeId(), newNode);
 							
 							if (c.type == SpiceCmdTypes.SELECT_SOURCE) {
 								if (c.numericParam.startsWith("7") &&
