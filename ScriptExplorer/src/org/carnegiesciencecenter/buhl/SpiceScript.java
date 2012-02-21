@@ -36,6 +36,7 @@ public class SpiceScript {
 	int tapeValue = 0;
 	int tapeStartPoint;
 	boolean tapeRunning = false;
+	int tapeAudioDiff = 0;
 	int clock = 0;
 	int sectionNum = 0;
 	String interactiveChannel;
@@ -174,6 +175,8 @@ public class SpiceScript {
 	
 	int parseSPICE(HashMap<String,CmdNode> nodes) {
 		int lineCnt = 0;
+		tapeValue = 0;
+		tapeAudioDiff = 0;
 		BufferedReader reader = new BufferedReader(new StringReader(text));
 		String line;
 		LineTypes status;
@@ -229,17 +232,9 @@ public class SpiceScript {
 							absTimeCode = loadTimecode(c.timecode);
 							c.setExecTime(clock, oldClock);
 							
-					
-							// update currentTapeValue for this SPICE command, for TIME_DEBUG
-							// must be done before we update tapeValue
-							c.currentTapeRunning = tapeRunning;
-							if (tapeRunning) {
-								c.currentTapeValue = (clock - tapeStartPoint) + tapeValue;
-							}
-							else {
-								c.currentTapeValue = tapeValue;
-							}
-
+							if (absTimeCode && c.type == SpiceCmdTypes.COMMENT)
+								c.type = SpiceCmdTypes.COMMENT_ABS;
+							
 							commands.add(c);
 							
 							if (c.type == SpiceCmdTypes.TAPE_SEARCH) {
@@ -247,7 +242,7 @@ public class SpiceScript {
 							}
 							
 							if (c.type == SpiceCmdTypes.TAPE_JUMP) {
-								System.out.println(c.action.substring(11,22));
+								System.out.println("TAPE JUMP: " + c.action.substring(11,22));
 								tapeValue = timeValue(c.action.substring(11,22));
 							}
 							
@@ -274,6 +269,21 @@ public class SpiceScript {
 								}
 							}
 							
+							c.currentTapeRunning = tapeRunning;
+							if (tapeRunning) {
+								c.currentTapeValue = (clock - tapeStartPoint) + tapeValue;
+							}
+							else {
+								c.currentTapeValue = tapeValue;
+							}
+
+							if (c.type == SpiceCmdTypes.AUDIO_JUMP) {
+								System.out.println("AUDIO JUMP: " + c.action.substring(11,22));
+								tapeAudioDiff = c.currentTapeValue - timeValue(c.action.substring(11,22));
+							}
+							
+							c.currentTapeAudioDiff = tapeAudioDiff;
+
 							CmdNode newNode = new CmdNode(lineCnt,c);
 							if (absTimeCode || c.type == SpiceCmdTypes.TAPE_PLAY || c.type == SpiceCmdTypes.TAPE_PAUSE) {
 								CmdNode tapeNode = new CmdNode(c.timeBegin, c.currentTapeValue);

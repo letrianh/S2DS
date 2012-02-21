@@ -46,7 +46,7 @@ public class DsScript {
 		currentSection = 0;
 	}
 	
-	ArrayList<DsCmd> runNextAt(int timePoint, int superOrder, int tapePoint, boolean tapeRunning) {
+	ArrayList<DsCmd> runNextAt(int timePoint, int superOrder) {
 		ArrayList<DsCmd> list = new ArrayList<DsCmd>();
 		int idxBegin, idxEnd;
 		if (reachedTheEnd)
@@ -64,11 +64,12 @@ public class DsScript {
 		this.loadNextButton = false;
 		while (idxBegin <= idxEnd) {
 			DsCmd c = new DsCmd(commands.get(idxBegin));
-			c.currentTapeRunning = tapeRunning;
-			if (tapeRunning)
-				c.setCurrentTapeValue(tapePoint + c.timeBegin);
-			else
-				c.setCurrentTapeValue(tapePoint);
+			c.setCurrentTapeValue(-1);	// -1 is the marker to indicate that this value need to be fixed
+			//c.currentTapeRunning = tapeRunning;
+			//if (tapeRunning)
+			//	c.setCurrentTapeValue(tapePoint + c.timeBegin);
+			//else
+			//	c.setCurrentTapeValue(tapePoint);
 			c.addToExecTime(timePoint);
 			c.setSuperOrder(superOrder);
 			
@@ -76,7 +77,8 @@ public class DsScript {
 				this.loadTime = c.timeBegin;	// load time for this Show Next
 				this.loadNextButton = true;
 			}
-			list.add(c);
+			if (c.type != DsCmdTypes.WAIT)	// do not need to add WAIT only cmds
+				list.add(c);
 			idxBegin++;
 		}
 		currentSection++;

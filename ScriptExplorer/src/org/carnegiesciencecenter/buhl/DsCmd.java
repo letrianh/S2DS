@@ -6,12 +6,14 @@ enum DsCmdTypes {
 	STOP,		// DS Stop 
 	SPICESTOP,	// translated from SPICE Stop
 	COMMENT,	// started with ' or ;
+	COMMENT_ABS,// comment with absolute time stamp
 	EMPTY,		// empty line
 	WAIT,		// containing only + and wait time
 	NEXT,		// Show Next
 	OTHER,		// regular commands
 	TIME_DEBUG,	// fake command 'TIME_DEBUG
-	TIME_ADJUST	// fake command '@
+	TIME_ADJUST,// fake command '#
+	TIME_FLEX	// fake command 'TIME_FLEX
 }
 
 public class DsCmd implements Comparable<DsCmd> {
@@ -25,6 +27,7 @@ public class DsCmd implements Comparable<DsCmd> {
 	int order;						// Order in which cmd was added. Used for sorting commands
 	int superOrder;					// Order inherited from SPICE
 	int currentTapeValue;			// DA-88 tape position when this cmd is executed
+	int currentTapeAudioDiff;		// Time difference between timecode and audio file. NEED for TIME_ADJUST
 	boolean currentTapeRunning;		// Status of the tape
 	boolean isNative = true;				// This cmd is from DS file or was translated from SPICE
 	
@@ -34,6 +37,7 @@ public class DsCmd implements Comparable<DsCmd> {
 		timeBegin = runTime;
 		action = "";
 		superOrder = o;
+		currentTapeValue = -1;	// this is IMPORTANT to indicate that this is a DS-native cmd
 		if (comment.length() != 0) {
 			type = DsCmdTypes.COMMENT;
 			wholeLine = comment;
@@ -57,6 +61,7 @@ public class DsCmd implements Comparable<DsCmd> {
 		superOrder = c.superOrder;
 		currentTapeValue = c.currentTapeValue;
 		currentTapeRunning = c.currentTapeRunning;
+		currentTapeAudioDiff = c.currentTapeAudioDiff;
 	}
 	
 	// Standard constructor. Called when the script file is read the first time.
@@ -88,9 +93,13 @@ public class DsCmd implements Comparable<DsCmd> {
 				type = DsCmdTypes.TIME_DEBUG;
 				return;
 			}
-			else if (line.startsWith("'@")) {	// ex: '@01:23:45.67
+			else if (line.startsWith("'#")) {	// ex: '#01:23:45.67
 				type = DsCmdTypes.TIME_ADJUST;
-				action = line.substring(2, 13);
+				action = "01" + line.substring(4, 13);
+				return;
+			}
+			else if (line.startsWith("'TIME_FLEX")) {	// ex: 'TIME_FLEX
+				type = DsCmdTypes.TIME_FLEX;
 				return;
 			}
 			else

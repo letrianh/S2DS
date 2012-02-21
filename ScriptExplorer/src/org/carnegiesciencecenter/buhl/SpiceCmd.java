@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
  *
  */
 enum SpiceCmdTypes {
-	STOP, RUN, COMMENT, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, TAPE_JUMP, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
+	STOP, RUN, COMMENT, COMMENT_ABS, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, TAPE_JUMP, AUDIO_JUMP, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
 }
 
 
@@ -34,7 +34,8 @@ public class SpiceCmd {
 	DsCmd dsEquiv;
 	int currentTapeValue = 0;
 	boolean currentTapeRunning = false;
-	
+	int currentTapeAudioDiff = 0;
+
 	int VSRC_positions[] = new int [8];
 	
 	SpiceCmd(String line, int currentSection) {
@@ -65,6 +66,10 @@ public class SpiceCmd {
 		}
 		else if (action.startsWith("'TAPE_JUMP:")) {
 			type = SpiceCmdTypes.TAPE_JUMP;
+			return;
+		}
+		else if (action.startsWith("'WAVE_JUMP:")) {
+			type = SpiceCmdTypes.AUDIO_JUMP;
 			return;
 		}
 		else
@@ -151,9 +156,14 @@ public class SpiceCmd {
 		dsEquiv.superOrder = this.sectionNum;
 		dsEquiv.currentTapeValue = this.currentTapeValue;
 		dsEquiv.currentTapeRunning = this.currentTapeRunning;
+		dsEquiv.currentTapeAudioDiff = this.currentTapeAudioDiff;
 		if (type == SpiceCmdTypes.COMMENT) {
 			dsEquiv.wholeLine = formatComment(commentAbove);
 			dsEquiv.type = DsCmdTypes.COMMENT;
+		}
+		else if (type == SpiceCmdTypes.COMMENT_ABS) {
+			dsEquiv.wholeLine = formatComment(commentAbove);
+			dsEquiv.type = DsCmdTypes.COMMENT_ABS;
 		}
 		else if (type == SpiceCmdTypes.EMPTY) {
 			dsEquiv.wholeLine = "\n";
@@ -168,7 +178,12 @@ public class SpiceCmd {
 			dsEquiv.type = DsCmdTypes.TIME_DEBUG;
 		}
 		else if (type == SpiceCmdTypes.TAPE_JUMP) {	// ex: 'TAPE_JUMP:01:05:40.45
-			dsEquiv.wholeLine = String.format("Jbox1 Goto \"audio\" %6.2f\n", ((double)SpiceScript.timeValue("00"+action.substring(13,22)))/100);
+			dsEquiv.type = DsCmdTypes.OTHER;
+			dsEquiv.wholeLine = "'SPECIAL: " + this.wholeLine;
+		}
+		else if (type == SpiceCmdTypes.AUDIO_JUMP) {	// ex: 'AUDIO_JUMP:00:05:40.45
+			dsEquiv.wholeLine = "'SPECIAL: " + this.wholeLine +"\n" +
+						String.format("Jbox1 Goto \"audio\" %6.2f\n", ((double)SpiceScript.timeValue("00"+action.substring(13,22)))/100);
 			dsEquiv.type = DsCmdTypes.OTHER;
 		}
 		else if (type == SpiceCmdTypes.STOP) {

@@ -368,7 +368,7 @@ public class ScriptExplorer {
 		    		allCmds.add(new DsCmd(loadPoint,	";======================================================================\n" + 
 		    											String.format("\t;BEGIN OF %s part %d/%d\n", scriptId, curSec+1, totalSec+1) +
 		    											"\t;----------------------------------------------------------------------\n", scriptSection));
-		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection,tapePoint, tapeRunning));
+		    		allCmds.addAll(s.runNextAt(loadPoint,scriptSection));
 		    		DsCmd last = allCmds.get(allCmds.size()-1);
 		    		allCmds.add(new DsCmd(last.timeBegin,
 		    											";----------------------------------------------------------------------\n" + 
@@ -387,7 +387,8 @@ public class ScriptExplorer {
 	    		if (flag) {
 	    			if (c.dsEquiv.type == DsCmdTypes.COMMENT || c.dsEquiv.type == DsCmdTypes.EMPTY || c.dsEquiv.type == DsCmdTypes.SPICESTOP) {
 	    				DsCmd last = allCmds.get(allCmds.size()-1);
-	    				c.dsEquiv.setExecTime(last.timeBegin); // force comments follow RunScript
+	    				c.dsEquiv.setExecTime(last.timeBegin);	// force comments follow RunScript
+	    				c.dsEquiv.currentTapeValue = -1;		// force tape info to be updated
 	    			}
 	    			else
 	    				flag = false;
@@ -401,30 +402,112 @@ public class ScriptExplorer {
 	    	c.setOrder(k);
 	    }
 	    Collections.sort(allCmds);
+	    
+	    int lastTapeValue = 0;
+	    boolean lastTapeRunning = false;
+	    int lastTimeBegin = 0;
+	    int lastDiff = 0;
+	    // now adjust tapeValue
+	    for (int k=0; k<allCmds.size(); k++) {
+	    	DsCmd c = allCmds.get(k);
+	    	int currentTimeBegin = c.timeBegin;
+	    	int timeSinceLastCmd = currentTimeBegin - lastTimeBegin;
+	    	if (c.currentTapeValue == -1) {	// need to fix
+	    		c.currentTapeRunning = lastTapeRunning;	// if the tapeValue is -1, this cmd must be DS-native, so it cannot change tape status
+	    		c.currentTapeAudioDiff = lastDiff;
+	    		if (lastTapeRunning)
+	    			c.currentTapeValue = lastTapeValue + timeSinceLastCmd;
+	    		else
+	    			c.currentTapeValue = lastTapeValue;
+	    		lastTapeValue = c.currentTapeValue;	// update lastTapeValue for next use
+	    	}
+	    	else {
+	    		lastTapeRunning = c.currentTapeRunning; // this is SPICE-native cmd, we trust the tape status stored in it
+	    		lastTapeValue = c.currentTapeValue;
+	    		lastDiff = c.currentTapeAudioDiff;
+	    	}
+	    	lastTimeBegin = c.timeBegin;
+	    }
 
 	    // now adjust time
 	    int delta = 0;
+	    int prevExecTime = 0;
+	    int kExec = -1;
+	    int kFlex = -1;
 	    for (int k=0; k<allCmds.size(); k++) {
 	    	DsCmd c = allCmds.get(k);
-	    	if (c.type != DsCmdTypes.SPICESTOP) {
-				if (delta > 0) {
-					c.addToExecTime(delta);
+			if (delta != 0) {
+				c.addToExecTime(delta);
+				if (c.currentTapeRunning)
 					c.addToCurrentTapeValue(delta);
-				}
-				if (c.type == DsCmdTypes.TIME_ADJUST) {
-					int localDelta = SpiceScript.timeValue(c.action) - c.currentTapeValue;
-					if (localDelta < 0)
-						c.wholeLine += String.format(" OLD TAPE VALUE: %s, NEGATIVE DELTA NOT ADDED: %d\n", 
-								SpiceScript.timeString(c.currentTapeValue), localDelta);
-					else if (localDelta > 0) {
-						c.wholeLine += String.format(" OLD TAPE VALUE: %s, ADDED: %.2f\n", 
-								SpiceScript.timeString(c.currentTapeValue), ((double)delta)/100);
-						delta += localDelta;
-					}
+			}
+	    	
+			if (c.type == DsCmdTypes.COMMENT || c.type == DsCmdTypes.EMPTY) {	// merge gaps between COMMENTs to give a chance to reduce gap later
+				int localDelta = c.timeBegin - prevExecTime;
+				if (localDelta > 0) {
+					c.addToExecTime(-localDelta);
+					if (c.currentTapeRunning)
+						c.addToCurrentTapeValue(-localDelta);
 				}
 	    	}
-	    	else	// adjust only cmds before a STOP
+	    	
+			if (c.type == DsCmdTypes.TIME_ADJUST) {
+				int timeTarget = SpiceScript.timeValue(c.action) + c.currentTapeAudioDiff;
+				int localDelta = timeTarget - c.currentTapeValue;
+				if (localDelta < 0) {
+					if (c.timeBegin + localDelta >= prevExecTime) {
+						c.wholeLine += String.format(" TARGET: %s, OLD TAPE VALUE: %s, REDUCED: %.2f\n", 
+								SpiceScript.timeString(timeTarget), 
+								SpiceScript.timeString(c.currentTapeValue), -((double)localDelta)/100);
+						delta += localDelta;
+						c.addToExecTime(localDelta);
+						if (c.currentTapeRunning)
+							c.addToCurrentTapeValue(localDelta);
+					}
+					else { // roll back to the last TIME_FLEX
+						int gap = (kFlex > 0 ? (allCmds.get(kFlex).timeBegin - allCmds.get(kFlex-1).timeBegin) : -1);
+						if (gap + localDelta >= 0) {
+							allCmds.get(kFlex).wholeLine += String.format(" OLD GAP: %.2f, REDUCED: %.2f\n", 
+									((double)gap)/100, -((double)localDelta)/100);
+							c.wholeLine += String.format("  TARGET: %s, OLD TAPE VALUE: %s, REDUCED: %.2f, using TIME_FLEX\n",
+									SpiceScript.timeString(timeTarget), 
+									SpiceScript.timeString(c.currentTapeValue), -((double)localDelta)/100);
+							delta += localDelta;
+							for (int j=kFlex; j<=k; j++) {
+								DsCmd cmd = allCmds.get(j);
+								cmd.addToExecTime(localDelta);
+								if (cmd.currentTapeRunning)
+									cmd.addToCurrentTapeValue(localDelta);
+							}
+						}
+						else
+							c.wholeLine += String.format("  TARGET: %s, OLD TAPE VALUE: %s, **FAILED** TO ADD: %.2f\n",
+									SpiceScript.timeString(timeTarget), 
+									SpiceScript.timeString(c.currentTapeValue), ((double)localDelta)/100);
+					}
+				}
+				else if (localDelta > 0) {
+					c.wholeLine += String.format("  TARGET: %s, OLD TAPE VALUE: %s, ADDED: %.2f\n",
+							SpiceScript.timeString(timeTarget), 
+							SpiceScript.timeString(c.currentTapeValue), ((double)localDelta)/100);
+					c.addToExecTime(localDelta);
+					if (c.currentTapeRunning)
+						c.addToCurrentTapeValue(localDelta);
+					delta += localDelta;
+				}
+			}
+			if (c.type == DsCmdTypes.TIME_FLEX) {
+				kFlex = k;
+			}
+			// adjust only cmds before a STOP
+			// reset all when hit a STOP
+	    	if (c.type == DsCmdTypes.SPICESTOP) {
 	    		delta = 0;
+	    		prevExecTime = 0;
+	    		kFlex = -1;
+	    	}
+	    	else
+	    		prevExecTime = c.timeBegin;
 	    }
 	    
 		Iterator<DsCmd> it = allCmds.iterator();
