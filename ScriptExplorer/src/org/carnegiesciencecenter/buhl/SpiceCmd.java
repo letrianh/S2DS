@@ -10,7 +10,21 @@ import java.util.StringTokenizer;
  *
  */
 enum SpiceCmdTypes {
-	STOP, RUN, COMMENT, COMMENT_ABS, EMPTY, RUNSCRIPT, TAPE_SEARCH, TAPE_PLAY, TAPE_PAUSE, TAPE_JUMP, AUDIO_JUMP, SELECT_SOURCE, OTHER, TIME_DEBUG, UNKNOWN
+	STOP, 
+	RUN, 
+	COMMENT, 
+	COMMENT_ABS, 
+	EMPTY, 
+	RUNSCRIPT, 
+	TAPE_SEARCH, 
+	TAPE_PLAY, 
+	TAPE_PAUSE, 
+	TAPE_JUMP, 
+	AUDIO_JUMP, 
+	SELECT_SOURCE, 
+	OTHER, 
+	TIME_DEBUG, 
+	UNKNOWN
 }
 
 
@@ -27,7 +41,7 @@ public class SpiceCmd {
 	String action;
 	String numericParam;
 	String deviceName;
-	String channelName;
+	String channelNames;
 	String otherParams;
 	String wholeLine;
 	static String extraInfo = ""; // actually not a good solution
@@ -46,7 +60,7 @@ public class SpiceCmd {
 		action = "";
 		numericParam = "";
 		deviceName = "";
-		channelName = "";
+		channelNames = "";
 		otherParams = "";
 		sectionNum = currentSection;
 		dsEquiv = null;
@@ -110,7 +124,7 @@ public class SpiceCmd {
 			}
 			if (!st.hasMoreTokens())
 				return;
-			channelName = st.nextToken();
+			channelNames = st.nextToken();
 			otherParams = "";
 			while (st.hasMoreTokens())
 				otherParams = otherParams.concat(st.nextToken());
@@ -122,11 +136,11 @@ public class SpiceCmd {
 				type = SpiceCmdTypes.RUN;
 			else if (action.toUpperCase().startsWith("SELECTSOURCE"))
 				type = SpiceCmdTypes.SELECT_SOURCE;
-			else if (action.toUpperCase().startsWith("SEARCH") && deviceName.startsWith("SRC2") && channelName.startsWith("D"))
+			else if (action.toUpperCase().startsWith("SEARCH") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_SEARCH;
-			else if (action.toUpperCase().startsWith("PLAY") && deviceName.startsWith("SRC2") && channelName.startsWith("D"))
+			else if (action.toUpperCase().startsWith("PLAY") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_PLAY;
-			else if (action.toUpperCase().startsWith("STILL") && deviceName.startsWith("SRC2") && channelName.startsWith("D"))
+			else if (action.toUpperCase().startsWith("STILL") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_PAUSE;
 		}
 	}
@@ -142,11 +156,11 @@ public class SpiceCmd {
 	}
 	
 	String formatOld() {
-		return String.format("'###REMOVED: Spice Cue Exec \"%s %s %s %s %s %s\"", duration, action, numericParam, deviceName, channelName, otherParams); 
+		return String.format("'###REMOVED: Spice Cue Exec \"%s %s %s %s %s %s\"", duration, action, numericParam, deviceName, channelNames, otherParams); 
 	}
 	
 	String formatExec() {
-		return String.format("Spice Cue Exec \"%s %s %s %s %s %s\"", duration.trim(), action.trim(), numericParam.trim(), deviceName.trim(), channelName.trim(), otherParams.trim());
+		return String.format("Spice Cue Exec \"%s %s %s %s %s %s\"", duration.trim(), action.trim(), numericParam.trim(), deviceName.trim(), channelNames.trim(), otherParams.trim());
 	}
 	
 	int translate() {
@@ -211,7 +225,7 @@ public class SpiceCmd {
 			
 			// for VPRJ
 			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
-				if (action.toUpperCase().startsWith("FADE") && channelName.contains(extraInfo)) {
+				if (action.toUpperCase().startsWith("FADE") && channelNames.contains(extraInfo)) {
 					if (!this.numericParam.startsWith("0")) {
 						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
 												"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
@@ -232,7 +246,7 @@ public class SpiceCmd {
 					dsEquiv.wholeLine = formatOld(); 
 				else if (action.toUpperCase().startsWith("SEARCH")) {
 					//VSRC_positions["ABCDEFGH".indexOf(channelName)] = Integer.parseInt(numericParam);
-					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Goto \"%s\" %s", this.wholeLine, "VSRC_"+channelName, numericParam); 
+					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Goto \"%s\" %s", this.wholeLine, "VSRC_"+channelNames, numericParam); 
 				}
 				else if (action.toUpperCase().startsWith("PLAY")) {
 					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Play", this.wholeLine); 

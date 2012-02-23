@@ -297,7 +297,7 @@ public class SpiceScript {
 							if (c.type == SpiceCmdTypes.SELECT_SOURCE) {
 								if (c.numericParam.startsWith("7") &&
 									c.deviceName.toUpperCase().startsWith("VPRJ"))
-									interactiveChannel = c.channelName;
+									interactiveChannel = c.channelNames;
 									SpiceCmd.extraInfo = interactiveChannel; 
 							}
 							
