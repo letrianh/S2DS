@@ -57,4 +57,9 @@ public abstract class AbstractDevice {
 	public void setTime(int t) {
 		status.atTime = t;
 	}
+	
+	public String objName() {
+		return String.format("%s_%s", getStatus().deviceName, getStatus().channelName);
+	}
+	
 }

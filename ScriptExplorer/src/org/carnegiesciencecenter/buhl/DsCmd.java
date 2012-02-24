@@ -64,6 +64,17 @@ public class DsCmd implements Comparable<DsCmd> {
 		currentTapeAudioDiff = c.currentTapeAudioDiff;
 	}
 	
+	// Use this constructor to manually create a DS cmd
+	DsCmd(int num, int time, String cat, String ac, DsCmdTypes t, String line) {
+		type = t;
+		sectionNum = num;
+		timeBegin = time;
+		waitTime = "";
+		wholeLine = line;
+		category = cat;
+		action = ac;
+	}
+	
 	// Standard constructor. Called when the script file is read the first time.
 	// At this point, we have no idea about currentTapeValue, currentTapeRunning, or timeBegin
 	DsCmd(String line, int secNum) {
@@ -155,6 +166,78 @@ public class DsCmd implements Comparable<DsCmd> {
 			w = w.substring(i);
 		}
 		return w;
+	}
+	
+	static public String formatView(String name, int T, int N) {
+		return String.format("Text View \"%s\" %d %d 100 100 100\n", name, T, N); 
+	}
+
+	static public String formatLocate(String name, int T, int A, int E, int W, int H) {
+		return String.format("Text Locate \"%s\" %d %d %d %d %d %d\n", name, T, A, E, 0, W, H); 
+	}
+
+	static public String formatAddImage(String name, String fileName, int W, int H, int M, int XO, int YO) {
+		return String.format("Text Add \"%s\" %s %d %d \"local\" %d %d %d %d %d\n", name, fileName, W, H, M, XO, YO, 0, 0); 
+	}
+
+	static public String formatAddImage(String name, String fileName, int W, int H, int M) {
+		return String.format("Text Add \"%s\" %s %d %d \"local\" %d %d %d %d %d\n", name, fileName, W, H, M, 0, 0, 0, 0); 
+	}
+
+	static public String formatAddImage(String name, String fileName) {
+		return String.format("Text Add \"%s\" %s %d %d \"local\" %d %d %d %d %d\n", name, fileName, 0, 0, 30, 0, 0, 0, 0); 
+	}
+
+	static public String formatRemove(String name) {
+		return String.format("Text Remove \"%s\"", name); 
+	}
+
+	static public String formatPlay(String name) {
+		return String.format("Text Play \"%s\"", name); 
+	}
+
+	static public String formatPause(String name) {
+		return String.format("Text Pause \"%s\"", name); 
+	}
+
+	static public String formatGoto(String name, int T) {
+		return String.format("Text Goto \"%s\" %.2f", name, ((double)T)/100); 
+	}
+
+	static public DsCmd cmdView(int num, int time, String name, int T, int N) {
+		return new DsCmd(num, time, "TEXT", "VIEW", DsCmdTypes.OTHER, formatView(name, T, N));
+	}
+
+	static public DsCmd cmdLocate(int num, int time, String name, int T, int A, int E, int W, int H) {
+		return new DsCmd(num, time, "TEXT", "LOCATE", DsCmdTypes.OTHER, formatLocate(name, T, A, E, W, H));
+	}
+
+	static public DsCmd cmdAddImage(int num, int time, String name, String fileName, int W, int H, int M, int XO, int YO) {
+		return new DsCmd(num, time, "TEXT", "ADD", DsCmdTypes.OTHER, formatAddImage(name, fileName, W, H, M, XO, YO));
+	}
+
+	static public DsCmd cmdAddImage(int num, int time, String name, String fileName, int W, int H, int M) {
+		return new DsCmd(num, time, "TEXT", "ADD", DsCmdTypes.OTHER, formatAddImage(name, fileName, W, H, M));
+	}
+
+	static public DsCmd cmdAddImage(int num, int time, String name, String fileName) {
+		return new DsCmd(num, time, "TEXT", "ADD", DsCmdTypes.OTHER, formatAddImage(name, fileName));
+	}
+
+	static public DsCmd cmdRemove(int num, int time, String name) {
+		return new DsCmd(num, time, "TEXT", "REMOVE", DsCmdTypes.OTHER, formatRemove(name));
+	}
+
+	static public DsCmd cmdPlay(int num, int time, String name) {
+		return new DsCmd(num, time, "TEXT", "PLAY", DsCmdTypes.OTHER, formatPlay(name));
+	}
+
+	static public DsCmd cmdPause(int num, int time, String name) {
+		return new DsCmd(num, time, "TEXT", "PAUSE", DsCmdTypes.OTHER, formatPause(name));
+	}
+
+	static public DsCmd cmdGoto(int num, int time, String name, int T) {
+		return new DsCmd(num, time, "TEXT", "GOTO", DsCmdTypes.OTHER, formatGoto(name, T));
 	}
 
 	@Override

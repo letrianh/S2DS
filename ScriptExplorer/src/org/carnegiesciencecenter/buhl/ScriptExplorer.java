@@ -44,6 +44,8 @@ public class ScriptExplorer {
 	HashMap<String,CmdNode> allNodes;
 	int buttonStartNum;
 	
+	DeviceManager dm;
+	
 	ScriptExplorer() {
 		ds = new HashMap<String, DsScript>();
 		tableModel = new ScriptTableModel();
@@ -335,6 +337,8 @@ public class ScriptExplorer {
 	}
 	
 	int convert() {
+		dm = new DeviceManager();
+		dm.initDevices();
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
 		allCmds = new ArrayList<DsCmd>();
@@ -350,7 +354,18 @@ public class ScriptExplorer {
 	    while(itr.hasNext()) {
 	    	SpiceCmd c = itr.next();
 	    	c.translate();
-	    	if (c.type == SpiceCmdTypes.RUNSCRIPT) {
+	    	if (c.type == SpiceCmdTypes.OTHER) {
+	    		if (c.deviceName.toUpperCase().startsWith("VSRC") ||
+	    			c.deviceName.toUpperCase().startsWith("ANIM") ||
+	    			c.deviceName.toUpperCase().startsWith("PROJ") ||
+	    			c.deviceName.toUpperCase().startsWith("VPRJ") ||
+	    			c.deviceName.toUpperCase().startsWith("INTER")) {
+	    			dm.resetEquivCmds();
+	    			dm.executeCommand(c);
+	    			allCmds.addAll(DeviceManager.equivCmds);
+	    		}
+	    	}
+	    	else if (c.type == SpiceCmdTypes.RUNSCRIPT) {
 	    		String scriptId = c.numericParam;
 	    		int scriptSection = c.sectionNum;
 	    		int loadPoint = c.timeBegin;

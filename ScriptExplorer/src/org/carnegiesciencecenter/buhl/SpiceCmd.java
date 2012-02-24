@@ -122,6 +122,20 @@ public class SpiceCmd {
 					return;
 				deviceName = st.nextToken();
 			}
+			else {
+				// special case: SEarch Ch 21 	VSRC	D
+				// Ch is not a device
+				if (action.toUpperCase().startsWith("SEARCH") &&
+						deviceName.toUpperCase().startsWith("CH")) {
+					numericParam = deviceName;
+					if (!st.hasMoreTokens())
+						return;
+					numericParam += st.nextToken();
+					if (!st.hasMoreTokens())
+						return;
+					deviceName = st.nextToken();
+				}
+			}
 			if (!st.hasMoreTokens())
 				return;
 			channelNames = st.nextToken();
@@ -225,34 +239,35 @@ public class SpiceCmd {
 			
 			// for VPRJ
 			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
-				if (action.toUpperCase().startsWith("FADE") && channelNames.contains(extraInfo)) {
-					if (!this.numericParam.startsWith("0")) {
-						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
-												"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
-												"\t Text Locate \"clip\" 0 0 40 0 48 36\n" +
-								String.format(	"\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
-					}
-					else
-						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
-							String.format("\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
-				}
-				else
-					dsEquiv.wholeLine = formatOld();
+				
+//				if (action.toUpperCase().startsWith("FADE") && channelNames.contains(extraInfo)) {
+//					if (!this.numericParam.startsWith("0")) {
+//						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
+//												"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
+//												"\t Text Locate \"clip\" 0 0 40 0 48 36\n" +
+//								String.format(	"\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
+//					}
+//					else
+//						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
+//							String.format("\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
+//				}
+//				else
+//					dsEquiv.wholeLine = formatOld();
 			}
 
 			// for VSRC
 			else if (deviceName.toUpperCase().startsWith("VSRC")) {
-				if (action.toUpperCase().startsWith("STILL"))
-					dsEquiv.wholeLine = formatOld(); 
-				else if (action.toUpperCase().startsWith("SEARCH")) {
-					//VSRC_positions["ABCDEFGH".indexOf(channelName)] = Integer.parseInt(numericParam);
-					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Goto \"%s\" %s", this.wholeLine, "VSRC_"+channelNames, numericParam); 
-				}
-				else if (action.toUpperCase().startsWith("PLAY")) {
-					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Play", this.wholeLine); 
-				}
-				else
-					dsEquiv.wholeLine = formatOld();
+//				if (action.toUpperCase().startsWith("STILL"))
+//					dsEquiv.wholeLine = formatOld(); 
+//				else if (action.toUpperCase().startsWith("SEARCH")) {
+//					//VSRC_positions["ABCDEFGH".indexOf(channelName)] = Integer.parseInt(numericParam);
+//					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Goto \"%s\" %s", this.wholeLine, "VSRC_"+channelNames, numericParam); 
+//				}
+//				else if (action.toUpperCase().startsWith("PLAY")) {
+//					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Play", this.wholeLine); 
+//				}
+//				else
+//					dsEquiv.wholeLine = formatOld();
 			}
 			
 			// for TAPE

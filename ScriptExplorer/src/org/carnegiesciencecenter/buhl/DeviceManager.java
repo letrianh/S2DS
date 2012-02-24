@@ -13,6 +13,8 @@ import java.util.Iterator;
  */
 public class DeviceManager {
 	
+	static public ArrayList<DsCmd> equivCmds;
+	
 	public HashMap<String,AbstractDevice> allDevices;
 	public HashMap<String,HashMap<String,AbstractDevice>> banks;
 	public HashMap<String, String> allChannels;
@@ -103,8 +105,8 @@ public class DeviceManager {
 		initBank("PROJ","AB");
 
 		// init TAPE
-		initBank("SRC2","A");
-		((PlayerStatus) getDevice("SRC2","A").getStatus()).speed = 1;
+		initBank("SRC2","D");
+		((PlayerStatus) getDevice("SRC2","D").getStatus()).speed = 100;
 		
 		// init VSRC
 		initBank("VSRC","ABCD");
@@ -128,15 +130,15 @@ public class DeviceManager {
 			while (itr.hasNext()) {
 				SlideProjector p = (SlideProjector) itr.next();
 				p.setClock(c.sectionNum, c.timeBegin);
-				if (c.action.startsWith("FADE"))
+				if (c.action.toUpperCase().startsWith("FADE"))
 					p.fade(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
-				else if (c.action.startsWith("DISSOLVE"))
+				else if (c.action.toUpperCase().startsWith("DISSOLVE"))
 					p.dissolve(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
-				else if (c.action.startsWith("ALT"))
+				else if (c.action.toUpperCase().startsWith("ALT"))
 					p.alt(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
-				else if (c.action.startsWith("LOCATE"))
+				else if (c.action.toUpperCase().startsWith("LOCATE"))
 					p.locate(Integer.parseInt(c.numericParam));
-				else if (c.action.startsWith("FORWARD"))
+				else if (c.action.toUpperCase().startsWith("FORWARD"))
 					p.forward(Integer.parseInt(c.numericParam));
 				else {
 					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
@@ -148,18 +150,63 @@ public class DeviceManager {
 			Iterator<AbstractDevice> itr = list.iterator();
 			while (itr.hasNext()) {
 				Player p = (Player) itr.next();
+				p.setClock(c.sectionNum, c.timeBegin);
+				if (c.action.toUpperCase().startsWith("PLAY")) {
+					if (c.numericParam.length() != 0)
+						p.play(Integer.parseInt(c.numericParam));
+					else
+						p.play();
+				}
+				else if (c.action.toUpperCase().startsWith("STILL")) {
+					p.still();
+				}
+				else if (c.action.toUpperCase().startsWith("SEARCH")) {
+					if (c.numericParam.toUpperCase().startsWith("CH"))
+						p.searchCh(Integer.parseInt(c.numericParam.substring(2)));
+					else
+						p.search(Integer.parseInt(c.numericParam));
+				}
+				else {
+					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+					return -1;
+				}
 			}
 		}
 		else if (devTypeByName(c.deviceName) == DeviceTypes.VIDEO_PROJECTOR) {
 			Iterator<AbstractDevice> itr = list.iterator();
 			while (itr.hasNext()) {
 				VideoProjector p = (VideoProjector) itr.next();
+				p.setClock(c.sectionNum, c.timeBegin);
+				if (c.action.toUpperCase().startsWith("FADE"))
+					p.fade(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+				else if (c.action.toUpperCase().startsWith("ALT"))
+					p.alt(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+				else if (c.action.toUpperCase().startsWith("SELECTSOURCE"))
+					p.selectSource(Integer.parseInt(c.numericParam));
+				else {
+					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+					return -1;
+				}
 			}
 		}
 		else if (devTypeByName(c.deviceName) == DeviceTypes.INTERACTIVE) {
 			Iterator<AbstractDevice> itr = list.iterator();
 			while (itr.hasNext()) {
 				InterSystem r = (InterSystem) itr.next();
+				r.setClock(c.sectionNum, c.timeBegin);
+				if (c.action.toUpperCase().startsWith("INTERLOAD")) {
+					r.load(c.numericParam);
+				} 
+				else if (c.action.toUpperCase().startsWith("INTERRUN")) {
+					r.run();
+				} 
+				else if (c.action.toUpperCase().startsWith("INTERPAGE")) {
+					r.page(Integer.parseInt(c.numericParam));
+				} 
+				else {
+					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+					return -1;
+				}
 			}
 		}
 		else {
@@ -167,5 +214,9 @@ public class DeviceManager {
 			return -1;
 		}
 		return 0;
+	}
+	
+	public void resetEquivCmds() {
+		equivCmds = new ArrayList<DsCmd>();
 	}
 }

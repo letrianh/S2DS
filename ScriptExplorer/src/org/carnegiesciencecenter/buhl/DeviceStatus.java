@@ -14,6 +14,7 @@ public abstract class DeviceStatus {
 	int atTime;
 	int prevTime;
 	int clockId;
+	AbstractDevice linkedDevice;
 
 	@Override
 	public String toString() {
