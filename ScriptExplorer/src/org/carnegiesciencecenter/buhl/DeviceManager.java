@@ -13,6 +13,7 @@ import java.util.Iterator;
  */
 public class DeviceManager {
 	
+	public String DEFAULT_CONFIG_FILE = "/home/lion/Downloads/CSC/SHOW/devices.conf"; 
 	static public ArrayList<DsCmd> equivCmds;
 	
 	public HashMap<String,AbstractDevice> allDevices;
@@ -32,6 +33,22 @@ public class DeviceManager {
 		return s;
 	}
 	
+	public VideoProjector getVideoProjector(String name, String channel) {
+		return ((VideoProjector)getDevice(name, channel));
+	}
+	
+	public SlideProjector getSlideProjector(String name, String channel) {
+		return ((SlideProjector)getDevice(name, channel));
+	}
+	
+	public Player getPlayer(String name, String channel) {
+		return ((Player)getDevice(name, channel));
+	}
+	
+	public InterSystem getInterSystem(String name, String channel) {
+		return ((InterSystem)getDevice(name, channel));
+	}
+	
 	public ArrayList<AbstractDevice> getOtherDeviceSet(String name, String channels) {
 		return getDeviceSet(name, getOthers(name, channels));
 	}
@@ -39,12 +56,15 @@ public class DeviceManager {
 	public ArrayList<AbstractDevice> getDeviceSet(String name, String channels) {
 		ArrayList<AbstractDevice> list = new ArrayList<AbstractDevice>();
 		for (int i=0; i<channels.length(); i++)
-			list.add(allDevices.get(name+"-"+channels.substring(i, i+1)));
+			list.add(getDevice(name, channels.substring(i, i+1)));
 		return list;
 	}
 	
 	public AbstractDevice getDevice(String name, String channel) {
-		return allDevices.get(name+"-"+channel);
+		AbstractDevice d = allDevices.get(name+"-"+channel);
+		if (d == null)
+			System.out.println("Device not found: " + name + "-" + channel);
+		return d;
 	}
 	
 	public void setClockAll(int id, int time) {
@@ -59,7 +79,7 @@ public class DeviceManager {
 			return DeviceTypes.SLIDE_PROJECTOR;
 		else if (name.startsWith("VPRJ"))
 			return DeviceTypes.VIDEO_PROJECTOR;
-		else if (name.startsWith("SCR2"))
+		else if (name.startsWith("SRC2") || name.startsWith("VSRC"))
 			return DeviceTypes.PLAYER;
 		else if (name.startsWith("INTER"))
 			return DeviceTypes.INTERACTIVE;
@@ -75,14 +95,21 @@ public class DeviceManager {
 		for (int i=0; i<channels.length(); i++) {
 			String ch = channels.substring(i, i+1); 
 			AbstractDevice dev;
-			if (type == DeviceTypes.SLIDE_PROJECTOR)
+			if (type == DeviceTypes.SLIDE_PROJECTOR) {
 				dev = new SlideProjector(name,ch, allEvents);
-			else if (type == DeviceTypes.PLAYER)
+				((SlideProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+			}
+			else if (type == DeviceTypes.PLAYER) {
 				dev = new Player(name,ch, allEvents);
-			else if (type == DeviceTypes.VIDEO_PROJECTOR)
+			}
+			else if (type == DeviceTypes.VIDEO_PROJECTOR) {
 				dev = new VideoProjector(name,ch, allEvents);
-			else if (type == DeviceTypes.INTERACTIVE)
+				((VideoProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+			}
+			else if (type == DeviceTypes.INTERACTIVE) {
 				dev = new InterSystem(name,ch, allEvents);
+				((InterSystem) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+			}
 			else {
 				System.out.println("Unimplemented device type: " + name);
 				return;
@@ -109,13 +136,14 @@ public class DeviceManager {
 		((PlayerStatus) getDevice("SRC2","D").getStatus()).speed = 100;
 		
 		// init VSRC
-		initBank("VSRC","ABCD");
+		initBank("VSRC","ABCDEFGH");
 		
 		// init INTER
 		initBank("INTER","A");
 
 		// init VPRJ
-		initBank("VPRJ","ABCD");
+		initBank("VPRJ","ABCDEF");
+		
 		VideoProjector.addSource(1, getDevice("VSRC","A"));
 		VideoProjector.addSource(2, getDevice("VSRC","B"));
 		VideoProjector.addSource(3, getDevice("VSRC","C"));
@@ -123,7 +151,14 @@ public class DeviceManager {
 		VideoProjector.addSource(7, getDevice("INTER","A"));
 	}
 	
+	private int toTime(String s) {
+		return 100*Integer.parseInt(s);
+	}
+	
 	int executeCommand(SpiceCmd c) {
+		//for debug
+		System.out.println(c.wholeLine);
+		
 		ArrayList<AbstractDevice> list = getDeviceSet(c.deviceName, c.channelNames);
 		if (devTypeByName(c.deviceName) == DeviceTypes.SLIDE_PROJECTOR) {
 			Iterator<AbstractDevice> itr = list.iterator();
@@ -131,11 +166,11 @@ public class DeviceManager {
 				SlideProjector p = (SlideProjector) itr.next();
 				p.setClock(c.sectionNum, c.timeBegin);
 				if (c.action.toUpperCase().startsWith("FADE"))
-					p.fade(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+					p.fade(toTime(c.duration), Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("DISSOLVE"))
-					p.dissolve(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+					p.dissolve(toTime(c.duration), Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("ALT"))
-					p.alt(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+					p.alt(toTime(c.duration), Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("LOCATE"))
 					p.locate(Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("FORWARD"))
@@ -178,11 +213,17 @@ public class DeviceManager {
 				VideoProjector p = (VideoProjector) itr.next();
 				p.setClock(c.sectionNum, c.timeBegin);
 				if (c.action.toUpperCase().startsWith("FADE"))
-					p.fade(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+					p.fade(toTime(c.duration), Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("ALT"))
-					p.alt(Integer.parseInt(c.duration), Integer.parseInt(c.numericParam));
+					p.alt(toTime(c.duration), Integer.parseInt(c.numericParam));
 				else if (c.action.toUpperCase().startsWith("SELECTSOURCE"))
 					p.selectSource(Integer.parseInt(c.numericParam));
+				else if (c.action.toUpperCase().startsWith("FANON"))
+					p.fanOn();
+				else if (c.action.toUpperCase().startsWith("FANOFF"))
+					p.fanOff();
+				else if (c.action.toUpperCase().startsWith("CONTRAST"))
+					p.contrast(Integer.parseInt(c.numericParam));
 				else {
 					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
 					return -1;
@@ -194,18 +235,23 @@ public class DeviceManager {
 			while (itr.hasNext()) {
 				InterSystem r = (InterSystem) itr.next();
 				r.setClock(c.sectionNum, c.timeBegin);
-				if (c.action.toUpperCase().startsWith("INTERLOAD")) {
-					r.load(c.numericParam);
-				} 
-				else if (c.action.toUpperCase().startsWith("INTERRUN")) {
-					r.run();
-				} 
-				else if (c.action.toUpperCase().startsWith("INTERPAGE")) {
-					r.page(Integer.parseInt(c.numericParam));
-				} 
+				if (r.getStatus().usingSVID) {
+					DeviceManager.equivCmds.add(DsCmd.cmdCueExec(c.sectionNum, c.timeBegin, c.wholeLine.substring(12).trim()));
+				}
 				else {
-					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
-					return -1;
+					if (c.action.toUpperCase().startsWith("INTERLOAD")) {
+						r.load(c.numericParam);
+					} 
+					else if (c.action.toUpperCase().startsWith("INTERRUN")) {
+						r.run();
+					} 
+					else if (c.action.toUpperCase().startsWith("INTERPAGE")) {
+						r.page(Integer.parseInt(c.numericParam));
+					} 
+					else {
+						System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+						return -1;
+					}
 				}
 			}
 		}

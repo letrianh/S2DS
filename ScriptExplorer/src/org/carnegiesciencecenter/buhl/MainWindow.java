@@ -46,7 +46,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	JMenuBar menuBar;
 	JMenu fileMenu, scriptMenu, helpMenu;
 	JMenuItem openButtonSetMI, openSpiceMI, showInUseOnlyMI, copyUsedButtonsMI,
-		exploreMI, convertMI, saveMI, splitMI, 
+		cutSeqMI, exploreMI, convertMI, saveMI, splitMI, 
 		helpMI, aboutMI; 
 	JTable scriptTable;
 	JPanel statusPanel;
@@ -79,6 +79,8 @@ public class MainWindow extends JFrame implements ActionListener {
 		scriptMenu.add(convertMI);
 		saveMI = new JMenuItem("Save to button");
 		scriptMenu.add(saveMI);
+		cutSeqMI = new JMenuItem("Cut from time point");
+		scriptMenu.add(cutSeqMI);
 		splitMI = new JMenuItem("Split converted DS script");
 		scriptMenu.add(splitMI);
 		exploreMI = new JMenuItem("Explore");
@@ -177,6 +179,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		showInUseOnlyMI.addActionListener(this);
 		copyUsedButtonsMI.addActionListener(this);
 		splitMI.addActionListener(this);
+		cutSeqMI.addActionListener(this);
 		
 		this.setExtendedState(this.getExtendedState()|JFrame.MAXIMIZED_BOTH);
 
@@ -210,7 +213,8 @@ public class MainWindow extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
         if (e.getSource() == openButtonSetMI) {
-        	se.buttonSetPath = openButtonSet();
+        	//se.buttonSetPath = openButtonSet();
+        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/DAZZLE");
         	if (se.buttonSetPath != null) {
         		buttonSetLabel.setText(se.buttonSetPath.getName());
         		se.LoadDSFiles();
@@ -219,7 +223,8 @@ public class MainWindow extends JFrame implements ActionListener {
         	}
         } 
         else if (e.getSource() == openSpiceMI) {
-        	se.spiceFile = openSpiceFile();
+        	//se.spiceFile = openSpiceFile();
+        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/2-DAZZLE.SHOW");
         	if (se.spiceFile != null) {
         		spiceLabel.setText(se.spiceFile.getName());
         		se.LoadSPICEfile();
@@ -266,6 +271,16 @@ public class MainWindow extends JFrame implements ActionListener {
         	if (response != null) {
 	        	se.buttonStartNum = Integer.parseInt(response);
 	        	se.splitFile();
+        	}
+        }
+        else if (e.getSource() == cutSeqMI) {
+        	String response = JOptionPane.showInputDialog(null,
+      			  "Cut from time (mm:ss.ff)",
+      			  "Cut time point",
+      			  JOptionPane.QUESTION_MESSAGE);
+        	if (response != null) {
+        		se.output = se.generateOutput(se.cutSequence(Clock.timeValue("01:"+response), 99999999, se.allCmds));
+        		dsTextArea.setText(se.output);
         	}
         }
         else if (e.getSource() == exploreMI) {

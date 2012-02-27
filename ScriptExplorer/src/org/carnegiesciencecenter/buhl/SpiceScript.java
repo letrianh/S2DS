@@ -294,12 +294,12 @@ public class SpiceScript {
 							}
 							nodes.put(newNode.getNodeId(), newNode);
 							
-							if (c.type == SpiceCmdTypes.SELECT_SOURCE) {
-								if (c.numericParam.startsWith("7") &&
-									c.deviceName.toUpperCase().startsWith("VPRJ"))
-									interactiveChannel = c.channelNames;
-									SpiceCmd.extraInfo = interactiveChannel; 
-							}
+//							if (c.type == SpiceCmdTypes.SELECT_SOURCE) {
+//								if (c.numericParam.startsWith("7") &&
+//									c.deviceName.toUpperCase().startsWith("VPRJ"))
+//									interactiveChannel = c.channelNames;
+//									SpiceCmd.extraInfo = interactiveChannel; 
+//							}
 							
 							if (c.type == SpiceCmdTypes.STOP) {
 								System.out.println("SectionNum = " + Integer.toString(sectionNum));

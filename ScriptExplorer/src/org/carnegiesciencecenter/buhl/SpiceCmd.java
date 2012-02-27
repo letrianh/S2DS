@@ -21,7 +21,7 @@ enum SpiceCmdTypes {
 	TAPE_PAUSE, 
 	TAPE_JUMP, 
 	AUDIO_JUMP, 
-	SELECT_SOURCE, 
+//	SELECT_SOURCE, 
 	OTHER, 
 	TIME_DEBUG, 
 	UNKNOWN
@@ -44,7 +44,7 @@ public class SpiceCmd {
 	String channelNames;
 	String otherParams;
 	String wholeLine;
-	static String extraInfo = ""; // actually not a good solution
+//	static String extraInfo = ""; // actually not a good solution
 	DsCmd dsEquiv;
 	int currentTapeValue = 0;
 	boolean currentTapeRunning = false;
@@ -111,11 +111,23 @@ public class SpiceCmd {
 				if (!st.hasMoreTokens())
 					return;
 			}
+
+			if (action.toUpperCase().startsWith("INTER")) {	// special case for Interactive System
+				deviceName = "INTER";
+				channelNames = "A";
+			}
+
 			// now get parameters
 			if (!st.hasMoreTokens()) {
 				return;
 			}
 			deviceName = st.nextToken();
+
+			if (action.toUpperCase().startsWith("INTER")) {	// special case for Interactive System
+				deviceName = "INTER";
+				channelNames = "A";
+			}
+
 			if ("0123456789".indexOf(deviceName.substring(0,1)) != -1) { // this is percentage/script number
 				numericParam = deviceName;
 				if (!st.hasMoreTokens())
@@ -148,8 +160,8 @@ public class SpiceCmd {
 				type = SpiceCmdTypes.RUNSCRIPT;
 			else if (action.toUpperCase().startsWith("RUN"))
 				type = SpiceCmdTypes.RUN;
-			else if (action.toUpperCase().startsWith("SELECTSOURCE"))
-				type = SpiceCmdTypes.SELECT_SOURCE;
+//			else if (action.toUpperCase().startsWith("SELECTSOURCE"))
+//				type = SpiceCmdTypes.SELECT_SOURCE;
 			else if (action.toUpperCase().startsWith("SEARCH") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_SEARCH;
 			else if (action.toUpperCase().startsWith("PLAY") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
@@ -238,8 +250,8 @@ public class SpiceCmd {
 				dsEquiv.wholeLine = formatOld();
 			
 			// for VPRJ
-			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
-				
+//			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
+//				
 //				if (action.toUpperCase().startsWith("FADE") && channelNames.contains(extraInfo)) {
 //					if (!this.numericParam.startsWith("0")) {
 //						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
@@ -253,7 +265,7 @@ public class SpiceCmd {
 //				}
 //				else
 //					dsEquiv.wholeLine = formatOld();
-			}
+//			}
 
 			// for VSRC
 			else if (deviceName.toUpperCase().startsWith("VSRC")) {
@@ -285,29 +297,6 @@ public class SpiceCmd {
 		return 0;
 	}
 	
-//	SpiceCmd combine(SpiceCmd nextCmd) {
-//		if (this.type == SpiceCmdTypes.COMMENT && nextCmd.type == SpiceCmdTypes.COMMENT) {
-//			commentAbove = commentAbove.concat("\n").concat(nextCmd.commentAbove);
-//			wholeLine = wholeLine.concat("\n").concat(nextCmd.wholeLine);
-//			return this;
-//		}
-//		else if (this.type == SpiceCmdTypes.COMMENT && nextCmd.type != SpiceCmdTypes.COMMENT) {
-//			nextCmd.commentAbove = commentAbove.concat("\n").concat(nextCmd.commentAbove);
-//			nextCmd.wholeLine = wholeLine.concat("\n").concat(nextCmd.wholeLine);
-//			return nextCmd;
-//		}
-//		else if (this.type != SpiceCmdTypes.COMMENT && nextCmd.type == SpiceCmdTypes.COMMENT) {
-//			commentBelow = nextCmd.commentAbove;
-//			wholeLine = wholeLine.concat("\n").concat(nextCmd.wholeLine);
-//			return this;
-//		}
-//		else {
-//			System.out.println("ERROR: cannot combine these types of commands.");
-//			System.out.println("Cmd1: ".concat(this.wholeLine));
-//			System.out.println("Cmd2: ".concat(nextCmd.wholeLine));
-//			return null;
-//		}
-//	}
 	
 	void setExecTime(int v, int oldClock) {
 		timeBegin = v;

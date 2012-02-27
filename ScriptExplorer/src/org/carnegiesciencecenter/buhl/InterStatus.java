@@ -9,5 +9,6 @@ package org.carnegiesciencecenter.buhl;
  */
 public class InterStatus extends DeviceStatus {
 	int currentPage;
-	String fileName;
+	String fileName = "";
+	boolean usingSVID;
 }

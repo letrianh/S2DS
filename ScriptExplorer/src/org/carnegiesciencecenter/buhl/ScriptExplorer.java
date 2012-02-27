@@ -336,11 +336,15 @@ public class ScriptExplorer {
 		return String.format("+%4.2f\n", t);
 	}
 	
+	public String getSoundFileName() {
+		return "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
+	}
+	
 	int convert() {
 		dm = new DeviceManager();
 		dm.initDevices();
 		String FS = System.getProperty("file.separator");
-		String SoundFileName = "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
+		String SoundFileName = getSoundFileName();
 		allCmds = new ArrayList<DsCmd>();
 		allCmds.add(new DsCmd(0,	";======================================================================\n" + 
 									"\t;PUT ADDITIONAL \"Text Add\" HERE. MAY NEED SOME DELAY AFTER THAT.\n" +
@@ -353,19 +357,12 @@ public class ScriptExplorer {
 		boolean flag = false;
 	    while(itr.hasNext()) {
 	    	SpiceCmd c = itr.next();
-	    	c.translate();
-	    	if (c.type == SpiceCmdTypes.OTHER) {
-	    		if (c.deviceName.toUpperCase().startsWith("VSRC") ||
-	    			c.deviceName.toUpperCase().startsWith("ANIM") ||
-	    			c.deviceName.toUpperCase().startsWith("PROJ") ||
-	    			c.deviceName.toUpperCase().startsWith("VPRJ") ||
-	    			c.deviceName.toUpperCase().startsWith("INTER")) {
-	    			dm.resetEquivCmds();
-	    			dm.executeCommand(c);
-	    			allCmds.addAll(DeviceManager.equivCmds);
-	    		}
-	    	}
-	    	else if (c.type == SpiceCmdTypes.RUNSCRIPT) {
+			
+	    	//for debug
+			System.out.println(String.format("sec=%d t=%d : %s", c.sectionNum, c.timeBegin, c.wholeLine));
+
+			c.translate();
+	    	if (c.type == SpiceCmdTypes.RUNSCRIPT) {
 	    		String scriptId = c.numericParam;
 	    		int scriptSection = c.sectionNum;
 	    		int loadPoint = c.timeBegin;
@@ -398,6 +395,19 @@ public class ScriptExplorer {
 	    		}
 	    		flag = true; // just finished a RunScript call
 	    	}
+	    	else if (c.type == SpiceCmdTypes.OTHER && (
+		    			c.deviceName.toUpperCase().startsWith("VSRC") ||
+		    			c.deviceName.toUpperCase().startsWith("ANIM") ||
+		    			c.deviceName.toUpperCase().startsWith("PROJ") ||
+		    			c.deviceName.toUpperCase().startsWith("VPRJ") ||
+		    			c.deviceName.toUpperCase().startsWith("INTER") ))  
+    		{
+    			dm.resetEquivCmds();
+    			DeviceManager.equivCmds.add(new DsCmd(c.sectionNum, c.timeBegin, "", "", DsCmdTypes.COMMENT, 
+    					String.format("'###EXECUTED: %s\n", c.wholeLine)));
+    			dm.executeCommand(c);
+    			allCmds.addAll(DeviceManager.equivCmds);
+    		}
 	    	else {
 	    		if (flag) {
 	    			if (c.dsEquiv.type == DsCmdTypes.COMMENT || c.dsEquiv.type == DsCmdTypes.EMPTY || c.dsEquiv.type == DsCmdTypes.SPICESTOP) {
@@ -412,19 +422,160 @@ public class ScriptExplorer {
 	    	}
 	    }
 
+	    
+	    // set order
+	    setOrder(allCmds);
+
+	    // sort by time
+	    sortByTime(allCmds);
+	    
+	    // adjust tapeValue
+	    adjustTapeValue(allCmds);
+
+	    // adjust timeBegin for cmds
+		ArrayList<DsCmd> dsOnlyCmds = new ArrayList<DsCmd>();
 	    for (int k=0; k<allCmds.size(); k++) {
 	    	DsCmd c = allCmds.get(k);
+	    	if (c.isNative)
+	    		dsOnlyCmds.add(c);
+	    }
+	    adjustTime(dsOnlyCmds);
+	    
+	    // sort by time
+	    sortByTime(allCmds);
+	    
+	    // adjust tapeValue
+	    for (int k=0; k<dsOnlyCmds.size(); k++) {
+	    	DsCmd c = dsOnlyCmds.get(k);
+	    	c.currentTapeValue = -1;	// reset to -1 then fix again
+	    }
+	    adjustTapeValue(allCmds);
+
+	    // generate output
+	    output = generateOutput(allCmds);
+	    return 0;
+	}
+	
+	public String generateOutput(ArrayList<DsCmd> list) {
+		Iterator<DsCmd> it = list.iterator();
+	    int oldTime = 0;
+		StringBuilder sb = new StringBuilder();
+		double queue = 0;
+	    while(it.hasNext()) {
+	    	DsCmd c = it.next();
+	    	if (c.type == DsCmdTypes.SPICESTOP)	// the STOP command was assigned a large exec time to make sure it happens at the end of block
+	    		c.timeBegin = oldTime;
+	    	double timeDiff = (c.timeBegin - oldTime);
+	    	if (timeDiff + queue > 0) {
+	    		if (c.type != DsCmdTypes.COMMENT && c.type != DsCmdTypes.EMPTY) {
+	    			timeDiff += queue;
+		    		timeDiff /= 100;
+		    		sb.append(formatWaitTime(timeDiff));
+			    	queue = 0;
+	    		}
+			    else
+			    	queue += timeDiff;
+	    	}
+
+	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
+	    		//uncomment this line to debug
+	    		sb.append(String.format("\t\t\t\t\t\t\t'BLOCK = %2d  t = %6d  # = %2d  iCLK = %s  TAPE = %s  RUN = %s\n",
+	    				c.superOrder, c.timeBegin, c.order,
+	    				SpiceScript.timeString(c.timeBegin), SpiceScript.timeString(c.currentTapeValue), (c.currentTapeRunning?"Y":"N")));
+	    		String finalText;
+	    		if (c.waitTime.length() != 0)
+	    			finalText = c.removeDelay().trim();
+	    		else
+	    			finalText = c.wholeLine.trim();
+    			sb.append("\t" + (c.isNative ? "" : "\t\t") + finalText + "\n");
+	    	}
+	    	oldTime = c.timeBegin;
+	    }
+	    if (queue > 0)
+	    	sb.append(formatWaitTime(queue));
+	    return sb.toString();
+	}
+	
+	public ArrayList<DsCmd> cutSequence(int fromTime, int toTime, ArrayList<DsCmd> list) {
+		ArrayList<DsCmd> newList = new ArrayList<DsCmd>();
+		HashMap<String,Integer> bag = new HashMap<String,Integer>();
+		if (list.size() == 0)
+			return newList;
+		boolean flag = false;
+		DsCmd lastCmd = null;
+		for (int i=list.size()-1; i>0; i--) {
+	    	DsCmd c = list.get(i);
+	    	int currentAudio = c.currentTapeValue - c.currentTapeAudioDiff;
+	    	if (!flag && fromTime <= currentAudio && currentAudio <= toTime)
+	    		flag = true;
+	    	if (flag && currentAudio < fromTime)
+	    		flag = false;
+    		if (flag || c.type == DsCmdTypes.SPICESTOP) {
+    			newList.add(c);
+	    		lastCmd = c;
+    		}
+	    	if (c.category.trim().startsWith("TEXT") && (flag || !bag.isEmpty())) {
+    			String s = c.removeDelay().trim();
+    			String pos[] = s.split("\\s");
+    			String objName = pos[2];
+    			while (objName.contains("\""))
+    				objName = objName.replace("\"", "");
+	    		if (c.action.trim().startsWith("VIEW")) {
+	    			if (flag && !bag.containsKey(objName))
+	    				bag.put(objName, 1);
+	    		}
+	    		else if  (c.action.trim().startsWith("LOCATE")) {
+    				Integer f = bag.get(objName);
+    				if (f != null) {
+    					if (!flag && ((f & 2) != 0))
+    						newList.add(c);
+    					f = (f | 2);
+    				}
+    			}
+	    		else if  (c.action.trim().startsWith("ADD")) {
+    				Integer f = bag.get(objName);
+    				if (f != null && !flag) {
+    					newList.add(c);
+    					bag.remove(objName);
+    				}
+    			}
+	    	}
+		}
+		int insTime;
+		newList.add(DsCmd.cmdJboxAdd(0, 0, getSoundFileName()));
+		newList.add(DsCmd.cmdJboxVol(0, 100, 100));
+		if (lastCmd != null && lastCmd.currentTapeRunning) {
+			insTime = lastCmd.timeBegin - (lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - fromTime);
+			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, fromTime));
+			newList.add(DsCmd.cmdJboxPlay(lastCmd.superOrder, insTime)); 
+		}
+		else {
+			insTime = lastCmd.timeBegin;
+			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff));
+		}
+		sortByTime(newList);
+		return newList;
+	}
+
+	private void sortByTime(ArrayList<DsCmd> list) {
+	    Collections.sort(list);
+	}
+	
+	private void setOrder(ArrayList<DsCmd> list) {
+	    for (int k=0; k<list.size(); k++) {
+	    	DsCmd c = list.get(k);
 	    	c.setOrder(k);
 	    }
-	    Collections.sort(allCmds);
-	    
+	}
+	
+	private void adjustTapeValue(ArrayList<DsCmd> list) {
 	    int lastTapeValue = 0;
 	    boolean lastTapeRunning = false;
 	    int lastTimeBegin = 0;
 	    int lastDiff = 0;
 	    // now adjust tapeValue
-	    for (int k=0; k<allCmds.size(); k++) {
-	    	DsCmd c = allCmds.get(k);
+	    for (int k=0; k<list.size(); k++) {
+	    	DsCmd c = list.get(k);
 	    	int currentTimeBegin = c.timeBegin;
 	    	int timeSinceLastCmd = currentTimeBegin - lastTimeBegin;
 	    	if (c.currentTapeValue == -1) {	// need to fix
@@ -443,14 +594,16 @@ public class ScriptExplorer {
 	    	}
 	    	lastTimeBegin = c.timeBegin;
 	    }
-
+	}
+	
+	private void adjustTime(ArrayList<DsCmd> list) {
 	    // now adjust time
 	    int delta = 0;
 	    int prevExecTime = 0;
 	    int kExec = -1;
 	    int kFlex = -1;
-	    for (int k=0; k<allCmds.size(); k++) {
-	    	DsCmd c = allCmds.get(k);
+	    for (int k=0; k<list.size(); k++) {
+	    	DsCmd c = list.get(k);
 			if (delta != 0) {
 				c.addToExecTime(delta);
 				if (c.currentTapeRunning)
@@ -480,16 +633,16 @@ public class ScriptExplorer {
 							c.addToCurrentTapeValue(localDelta);
 					}
 					else { // roll back to the last TIME_FLEX
-						int gap = (kFlex > 0 ? (allCmds.get(kFlex).timeBegin - allCmds.get(kFlex-1).timeBegin) : -1);
+						int gap = (kFlex > 0 ? (list.get(kFlex).timeBegin - list.get(kFlex-1).timeBegin) : -1);
 						if (gap + localDelta >= 0) {
-							allCmds.get(kFlex).wholeLine += String.format(" OLD GAP: %.2f, REDUCED: %.2f\n", 
+							list.get(kFlex).wholeLine += String.format(" OLD GAP: %.2f, REDUCED: %.2f\n", 
 									((double)gap)/100, -((double)localDelta)/100);
 							c.wholeLine += String.format("  TARGET: %s, OLD TAPE VALUE: %s, REDUCED: %.2f, using TIME_FLEX\n",
 									SpiceScript.timeString(timeTarget), 
 									SpiceScript.timeString(c.currentTapeValue), -((double)localDelta)/100);
 							delta += localDelta;
 							for (int j=kFlex; j<=k; j++) {
-								DsCmd cmd = allCmds.get(j);
+								DsCmd cmd = list.get(j);
 								cmd.addToExecTime(localDelta);
 								if (cmd.currentTapeRunning)
 									cmd.addToCurrentTapeValue(localDelta);
@@ -524,49 +677,6 @@ public class ScriptExplorer {
 	    	else
 	    		prevExecTime = c.timeBegin;
 	    }
-	    
-		Iterator<DsCmd> it = allCmds.iterator();
-	    int oldTime = 0;
-		StringBuilder sb = new StringBuilder();
-		double queue = 0;
-	    while(it.hasNext()) {
-	    	DsCmd c = it.next();
-	    	if (c.type == DsCmdTypes.SPICESTOP)	// the STOP command was assigned a large exec time to make sure it happens at the end of block
-	    		c.timeBegin = oldTime;
-	    	double timeDiff = (c.timeBegin - oldTime);
-	    	if (timeDiff + queue > 0) {
-	    		if (c.type != DsCmdTypes.COMMENT && c.type != DsCmdTypes.EMPTY) {
-	    			timeDiff += queue;
-		    		timeDiff /= 100;
-		    		sb.append(formatWaitTime(timeDiff));
-			    	queue = 0;
-	    		}
-			    else
-			    	queue += timeDiff;
-	    	}
-
-	    	//if (c.type == DsCmdTypes.TIME_DEBUG)
-	    	//	c.wholeLine = String.format("\n'TIME_DEBUG: Time-since-last-STOP = %s\tTape-value = %s\tTape-status = %s\n\n", 
-	    	//			formatTimeDebug(c.timeBegin), formatTimeDebug(c.currentTapeValue), (c.currentTapeRunning?"PLAYED":"STOPPED"));
-
-	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
-	    		//uncomment this line to debug
-	    		sb.append(String.format("\t\t\t\t\t\t\t'BLOCK = %2d  t = %6d  # = %2d  iCLK = %s  TAPE = %s  RUN = %s\n",
-	    				c.superOrder, c.timeBegin, c.order,
-	    				SpiceScript.timeString(c.timeBegin), SpiceScript.timeString(c.currentTapeValue), (c.currentTapeRunning?"Y":"N")));
-	    		String finalText;
-	    		if (c.waitTime.length() != 0)
-	    			finalText = c.removeDelay().trim();
-	    		else
-	    			finalText = c.wholeLine.trim();
-    			sb.append("\t" + (c.isNative ? "" : "\t\t") + finalText + "\n");
-	    	}
-	    	oldTime = c.timeBegin;
-	    }
-	    if (queue > 0)
-	    	sb.append(formatWaitTime(queue));
-	    output = sb.toString();
-	    return 0;
 	}
 	
 }
