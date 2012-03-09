@@ -15,6 +15,8 @@ public class VideoProjector extends AbstractDevice {
 	static private HashMap<Integer,AbstractDevice> sources = null;
 	static String DEFAULT_IMAGE_PATH = "ShowPath\\IMAGES\\";
 	static String DEFAULT_IMAGE_EXT = "TGA";
+	static String DEFAULT_VIDEO_PATH = "ShowPath\\VIDEOS\\";
+	static String DEFAULT_VIDEO_EXT = "AVI";
 
 	private double DEFAULT_AZIMUTH;
 	private double DEFAULT_ELEVATION;
@@ -49,8 +51,16 @@ public class VideoProjector extends AbstractDevice {
 		getStatus().brightness = n;
 
 		if (n != 0) {
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
-					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
+				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+						DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+			}
+			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
+				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+						DEFAULT_VIDEO_PATH+objName()+DEFAULT_VIDEO_EXT));
+				DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), 
+						((Player)getStatus().currentSource).getStatus().position));
+			}
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		}
@@ -69,8 +79,16 @@ public class VideoProjector extends AbstractDevice {
 		if (getStatus().brightness == 0) {
 			getStatus().brightness = n;
 
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
-					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
+				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+						DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+			}
+			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
+				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+						DEFAULT_VIDEO_PATH+objName()+DEFAULT_VIDEO_EXT));
+				DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), 
+						((Player)getStatus().currentSource).getStatus().position));
+			}
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));

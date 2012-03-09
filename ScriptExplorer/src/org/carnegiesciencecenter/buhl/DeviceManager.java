@@ -98,7 +98,7 @@ public class DeviceManager {
 			if (type == DeviceTypes.SLIDE_PROJECTOR) {
 				dev = new SlideProjector(name,ch, allEvents);
 				((SlideProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
-				String path = SlideProjector.loadParam("IMAGES", DEFAULT_CONFIG_FILE, "PATH");
+				String path = SlideProjector.loadParam("IMAGE", DEFAULT_CONFIG_FILE, "PATH");
 				if (path.length() != 0)
 					SlideProjector.DEFAULT_IMAGE_PATH = path;
 				String ext = SlideProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
@@ -111,12 +111,18 @@ public class DeviceManager {
 			else if (type == DeviceTypes.VIDEO_PROJECTOR) {
 				dev = new VideoProjector(name,ch, allEvents);
 				((VideoProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
-				String path = VideoProjector.loadParam("IMAGES", DEFAULT_CONFIG_FILE, "PATH");
+				String path = VideoProjector.loadParam("IMAGE", DEFAULT_CONFIG_FILE, "PATH");
 				if (path.length() != 0)
 					VideoProjector.DEFAULT_IMAGE_PATH = path;
 				String ext = VideoProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
 				if (ext.length() != 0)
 					VideoProjector.DEFAULT_IMAGE_EXT = ext;
+				path = VideoProjector.loadParam("VIDEO", DEFAULT_CONFIG_FILE, "PATH");
+				if (path.length() != 0)
+					VideoProjector.DEFAULT_VIDEO_PATH = path;
+				ext = VideoProjector.loadParam("VIDEO_EXT", DEFAULT_CONFIG_FILE, "PATH");
+				if (ext.length() != 0)
+					VideoProjector.DEFAULT_VIDEO_EXT = ext;
 			}
 			else if (type == DeviceTypes.INTERACTIVE) {
 				dev = new InterSystem(name,ch, allEvents);
