@@ -25,7 +25,7 @@ public abstract class AbstractDevice {
 	DeviceStatus status;
 	DeviceTypes type;
 	
-	ArrayList<DeviceStatus> list;
+	ArrayList<DeviceStatus> dList;
 	ArrayList<String> conf;
 	
 	AbstractDevice(String name, String ch, DeviceStatus s, ArrayList<DeviceStatus> l) {
@@ -35,7 +35,7 @@ public abstract class AbstractDevice {
 		status.state = DeviceState.STABLE;
 		status.atTime = 0;
 		status.prevTime = 0;
-		list = l;
+		dList = l;
 	}
 
 	public DeviceStatus getStatus() {
@@ -43,12 +43,12 @@ public abstract class AbstractDevice {
 	}
 	
 	public void useList(ArrayList<DeviceStatus> l) {
-		list = l;
+		dList = l;
 	}
 	
 	public void recordStatus() {
-		if (list != null)
-			list.add(status);
+		if (dList != null)
+			dList.add(status);
 	}
 	
 	public void setClock(int id, int t) {
@@ -60,11 +60,11 @@ public abstract class AbstractDevice {
 	public void setTime(int t) {
 		status.atTime = t;
 	}
-	
-	public int loadConfiguration(String fileName) {
-		conf = new ArrayList<String>();
-		String dName = "[" + getStatus().deviceName + "-" + getStatus().channelName + "]";
-		System.out.println("Reading position config for " + dName);
+
+	public static ArrayList<String> loadSection(String fileName, String sectionName) {
+		System.out.println("Reading file " + fileName + ", section " + sectionName);
+		ArrayList<String> list = new ArrayList<String>();
+		String dName = "[" + sectionName.trim() + "]";
 		try {
 			FileReader f = new FileReader(fileName);
 			BufferedReader b = new BufferedReader(f);
@@ -76,8 +76,8 @@ public abstract class AbstractDevice {
 					if (flag) {
 						if (s.startsWith("["))
 							break;
+						list.add(s);
 						System.out.println(s);
-						conf.add(s);
 					}
 					if (s.startsWith(dName))
 						flag = true;
@@ -87,14 +87,27 @@ public abstract class AbstractDevice {
 			f.close();
 		}
 		catch (Exception e) {
-			System.out.println("Error reading config file: " + fileName);
-			return 1;
+			System.out.println("Error reading file: " + fileName);
 		}
-		return 0;
+		return list;
+	}
+	
+	public int loadConfiguration(String fileName) {
+		String dName = getStatus().deviceName + "-" + getStatus().channelName;
+		System.out.println("Reading position config for " + dName);
+		conf = loadSection(fileName, dName);
+		if (conf.size() != 0)
+			return 0;
+		else
+			return -1;
 	}
 	
 	public String getParam(String param) {
-		for (String s: conf) {
+		return loadParam(param, conf);
+	}
+	
+	static public String loadParam(String param, ArrayList<String> list) {
+		for (String s: list) {
 			String pos[] = s.split("[\\s=]+");
 			if (param.toUpperCase().compareTo(pos[0].toUpperCase()) == 0) {
 				return pos[1];
@@ -103,6 +116,10 @@ public abstract class AbstractDevice {
 		return "";
 	}
 	
+	static public String loadParam(String param, String fname, String sname) {
+		return loadParam(param, loadSection(fname, sname));
+	}
+
 	public String objName() {
 		return String.format("%s_%s", getStatus().deviceName, getStatus().channelName);
 	}

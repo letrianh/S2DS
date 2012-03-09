@@ -108,6 +108,10 @@ public class SpiceCmd {
 			}
 			else { // other cmd with no time parameter at the beginning
 				timeDuration = DEFAULT_DURATION;
+				if (action.toUpperCase().startsWith("INTER")) {	// special case for Interactive System
+					deviceName = "INTER";
+					channelNames = "A";
+				}
 				if (!st.hasMoreTokens())
 					return;
 			}
@@ -124,6 +128,7 @@ public class SpiceCmd {
 			deviceName = st.nextToken();
 
 			if (action.toUpperCase().startsWith("INTER")) {	// special case for Interactive System
+				numericParam = deviceName;
 				deviceName = "INTER";
 				channelNames = "A";
 			}

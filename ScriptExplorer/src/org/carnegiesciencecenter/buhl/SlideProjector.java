@@ -12,6 +12,8 @@ import java.util.ArrayList;
 public class SlideProjector extends AbstractDevice {
 	
 	static int DEFAULT_MAX_NUM = 80;
+	static String DEFAULT_IMAGE_PATH = "ShowPath\\IMAGES\\";
+	static String DEFAULT_IMAGE_EXT = "TGA";
 	private double DEFAULT_AZIMUTH;
 	private double DEFAULT_ELEVATION;
 	private double DEFAULT_ROTATION;
@@ -58,7 +60,8 @@ public class SlideProjector extends AbstractDevice {
 		getStatus().state = DeviceState.STABLE;
 		this.recordStatus();
 
-		DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+		DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+				DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 		DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 				DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 	}
@@ -67,18 +70,20 @@ public class SlideProjector extends AbstractDevice {
 		getStatus().state = DeviceState.BEGIN_TRANSITION;
 		this.recordStatus();
 		getStatus().brightness = n;
-		getStatus().atTime += T;
-		getStatus().state = DeviceState.END_TRANSITION;
-		this.recordStatus();
 
 		if (n != 0) {
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		}
 		DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));
 		if (n == 0)
 			DeviceManager.equivCmds.add(DsCmd.cmdRemove(getStatus().clockId, getStatus().atTime, objName()));
+
+		getStatus().atTime += T;
+		getStatus().state = DeviceState.END_TRANSITION;
+		this.recordStatus();
 }
 	
 	public void dissolve(int T, int n) {
@@ -87,7 +92,8 @@ public class SlideProjector extends AbstractDevice {
 		if (getStatus().brightness == 0) {
 			getStatus().brightness = n;
 
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));
@@ -110,7 +116,8 @@ public class SlideProjector extends AbstractDevice {
 		if (getStatus().brightness == 0) {
 			getStatus().brightness = n;
 
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));
@@ -131,7 +138,8 @@ public class SlideProjector extends AbstractDevice {
 		getStatus().currentSlide += n;
 		this.recordStatus();
 
-		DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+		DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+				DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 		DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 				DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		if (getStatus().brightness != 0)
@@ -139,7 +147,7 @@ public class SlideProjector extends AbstractDevice {
 	}
 	
 	public String objName() {
-		return String.format("%s_%d", super.objName(), getStatus().currentSlide); 
+		return String.format("%s_%02d", super.objName(), getStatus().currentSlide); 
 	}
 	
 	public void setViewPosition(double A, double E, double R, double W, double H) {		

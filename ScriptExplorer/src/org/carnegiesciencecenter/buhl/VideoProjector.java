@@ -13,6 +13,8 @@ import java.util.HashMap;
 public class VideoProjector extends AbstractDevice {
 
 	static private HashMap<Integer,AbstractDevice> sources = null;
+	static String DEFAULT_IMAGE_PATH = "ShowPath\\IMAGES\\";
+	static String DEFAULT_IMAGE_EXT = "TGA";
 
 	private double DEFAULT_AZIMUTH;
 	private double DEFAULT_ELEVATION;
@@ -45,18 +47,20 @@ public class VideoProjector extends AbstractDevice {
 		getStatus().state = DeviceState.BEGIN_TRANSITION;
 		this.recordStatus();
 		getStatus().brightness = n;
-		getStatus().atTime += T;
-		getStatus().state = DeviceState.END_TRANSITION;
-		this.recordStatus();
 
 		if (n != 0) {
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		}
 		DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));
 		if (n == 0)
 			DeviceManager.equivCmds.add(DsCmd.cmdRemove(getStatus().clockId, getStatus().atTime, objName()));
+
+		getStatus().atTime += T;
+		getStatus().state = DeviceState.END_TRANSITION;
+		this.recordStatus();
 }
 	
 	public void alt(int T, int n) {
@@ -65,7 +69,8 @@ public class VideoProjector extends AbstractDevice {
 		if (getStatus().brightness == 0) {
 			getStatus().brightness = n;
 
-			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), "ShowPath\\IMAGES\\"+objName()+".TGA"));
+			DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+					DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));

@@ -13,7 +13,7 @@ import java.util.Iterator;
  */
 public class DeviceManager {
 	
-	public String DEFAULT_CONFIG_FILE = "/home/lion/Downloads/CSC/SHOW/devices.conf"; 
+	public static String DEFAULT_CONFIG_FILE = "/home/lion/Downloads/CSC/SHOW/devices.conf"; 
 	static public ArrayList<DsCmd> equivCmds;
 	
 	public HashMap<String,AbstractDevice> allDevices;
@@ -98,6 +98,12 @@ public class DeviceManager {
 			if (type == DeviceTypes.SLIDE_PROJECTOR) {
 				dev = new SlideProjector(name,ch, allEvents);
 				((SlideProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+				String path = SlideProjector.loadParam("IMAGES", DEFAULT_CONFIG_FILE, "PATH");
+				if (path.length() != 0)
+					SlideProjector.DEFAULT_IMAGE_PATH = path;
+				String ext = SlideProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
+				if (ext.length() != 0)
+					SlideProjector.DEFAULT_IMAGE_EXT = ext;
 			}
 			else if (type == DeviceTypes.PLAYER) {
 				dev = new Player(name,ch, allEvents);
@@ -105,6 +111,12 @@ public class DeviceManager {
 			else if (type == DeviceTypes.VIDEO_PROJECTOR) {
 				dev = new VideoProjector(name,ch, allEvents);
 				((VideoProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+				String path = VideoProjector.loadParam("IMAGES", DEFAULT_CONFIG_FILE, "PATH");
+				if (path.length() != 0)
+					VideoProjector.DEFAULT_IMAGE_PATH = path;
+				String ext = VideoProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
+				if (ext.length() != 0)
+					VideoProjector.DEFAULT_IMAGE_EXT = ext;
 			}
 			else if (type == DeviceTypes.INTERACTIVE) {
 				dev = new InterSystem(name,ch, allEvents);

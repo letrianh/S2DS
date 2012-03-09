@@ -173,24 +173,26 @@ public class DsCmd implements Comparable<DsCmd> {
 		return w;
 	}
 	
+	//======================================
+	
 	static public String formatView(String name, double T, double N) {
-		return String.format("Text View \"%s\" %.2f %.2f 100 100 100\n", name, T, N); 
+		return String.format("Text View \"%s\" %.2f %.2f 100 100 100\n", name, ((double)T)/100, N); 
 	}
 
 	static public String formatLocate(String name, double T, double A, double E, double R, double W, double H) {
-		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, T, A, E, R, W, H); 
+		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, ((double)T)/100, A, E, R, W, H); 
 	}
 
 	static public String formatAddImage(String name, String fileName, double W, double H, double M, double XO, double YO) {
-		return String.format("Text Add \"%s\" %s %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, XO, YO, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, XO, YO, 0.0, 0.0); 
 	}
 
 	static public String formatAddImage(String name, String fileName, double W, double H, double M) {
-		return String.format("Text Add \"%s\" %s %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, 0.0, 0.0, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, 0.0, 0.0, 0.0, 0.0); 
 	}
 
 	static public String formatAddImage(String name, String fileName) {
-		return String.format("Text Add \"%s\" %s %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 0.0); 
 	}
 
 	static public String formatRemove(String name) {
@@ -217,18 +219,23 @@ public class DsCmd implements Comparable<DsCmd> {
 		return String.format("Jbox1 Add \"audio\" \"%s\"", fileName); 
 	}
 	
+	static public String formatJboxAdd(String objName, String fileName) {
+		return String.format("Jbox1 Add \"%s\" \"%s\"", objName, fileName); 
+	}
+	
 	static public String formatJboxVol(int percent) {
 		return String.format("Jbox1 Volume \"audio\" 0 %d", percent); 
 	}
 	
 	static public String formatJboxGoto(double position) {
-		return String.format("Jbox1 Goto \"audio\" %.2f", position); 
+		return String.format("Jbox1 Goto \"audio\" %.2f", ((double)position)/100); 
 	}
 	
 	static public String formatJboxPlay() {
 		return String.format("Jbox1 Play \"audio\""); 
 	}
 	
+	//========================================
 
 	static public DsCmd cmdView(int num, int time, String name, double T, double N) {
 		return new DsCmd(num, time, "TEXT", "VIEW", DsCmdTypes.OTHER, formatView(name, T, N));
@@ -274,6 +281,10 @@ public class DsCmd implements Comparable<DsCmd> {
 		return new DsCmd(num, time, "JBOX1", "ADD", DsCmdTypes.OTHER, formatJboxAdd(fileName));
 	}
 
+	static public DsCmd cmdJboxAdd(int num, int time, String objName, String fileName) {
+		return new DsCmd(num, time, "JBOX1", "ADD", DsCmdTypes.OTHER, formatJboxAdd(objName, fileName));
+	}
+
 	static public DsCmd cmdJboxVol(int num, int time, int percent) {
 		return new DsCmd(num, time, "JBOX1", "VOLUME", DsCmdTypes.OTHER, formatJboxVol(percent));
 	}
@@ -285,6 +296,8 @@ public class DsCmd implements Comparable<DsCmd> {
 	static public DsCmd cmdJboxPlay(int num, int time) {
 		return new DsCmd(num, time, "JBOX1", "GOTO", DsCmdTypes.OTHER, formatJboxPlay());
 	}
+	
+	//=======================================
 
 	@Override
 	public int compareTo(DsCmd o) {

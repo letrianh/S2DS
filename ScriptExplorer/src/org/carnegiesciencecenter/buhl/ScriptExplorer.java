@@ -337,7 +337,13 @@ public class ScriptExplorer {
 	}
 	
 	public String getSoundFileName() {
-		return "SndPath\\DigitizedAudio\\" + spiceScript.title + ".ac3";
+		String path = SlideProjector.loadParam("SOUND", DeviceManager.DEFAULT_CONFIG_FILE, "PATH");
+		if (path.length() == 0)
+			path = "SndPath\\DigitizedAudio\\";
+		String fname = SlideProjector.loadParam("AUDIO", DeviceManager.DEFAULT_CONFIG_FILE, "PATH");
+		if (fname.length() == 0)
+			fname = spiceScript.title + ".ac3";
+		return path + fname;
 	}
 	
 	int convert() {
