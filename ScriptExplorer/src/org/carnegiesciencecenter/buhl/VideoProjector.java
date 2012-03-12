@@ -10,20 +10,10 @@ import java.util.HashMap;
  * @author Anh Le
  *
  */
-public class VideoProjector extends AbstractDevice {
+public class VideoProjector extends Projector {
 
 	static private HashMap<Integer,AbstractDevice> sources = null;
-	static String DEFAULT_IMAGE_PATH = "ShowPath\\IMAGES\\";
-	static String DEFAULT_IMAGE_EXT = "TGA";
-	static String DEFAULT_VIDEO_PATH = "ShowPath\\VIDEOS\\";
-	static String DEFAULT_VIDEO_EXT = "AVI";
 
-	private double DEFAULT_AZIMUTH;
-	private double DEFAULT_ELEVATION;
-	private double DEFAULT_ROTATION;
-	private double DEFAULT_WIDTH;
-	private double DEFAULT_HEIGHT;
-	
 	public VideoProjectorStatus getStatus() {
 		return (VideoProjectorStatus) status;
 	}
@@ -65,10 +55,12 @@ public class VideoProjector extends AbstractDevice {
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 		}
 		DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, n));
+
+		getStatus().atTime += T;
+		
 		if (n == 0)
 			DeviceManager.equivCmds.add(DsCmd.cmdRemove(getStatus().clockId, getStatus().atTime, objName()));
 
-		getStatus().atTime += T;
 		getStatus().state = DeviceState.END_TRANSITION;
 		this.recordStatus();
 }
@@ -97,6 +89,7 @@ public class VideoProjector extends AbstractDevice {
 			getStatus().brightness = 0;
 
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), T, 0));
+			DeviceManager.equivCmds.add(DsCmd.cmdRemove(getStatus().clockId, getStatus().atTime + T, objName()));
 		}
 		getStatus().atTime += T;
 		getStatus().state = DeviceState.END_TRANSITION;
@@ -130,29 +123,4 @@ public class VideoProjector extends AbstractDevice {
 		}
 	}
 
-	public void setViewPosition(double A, double E, double R, double W, double H) {		
-		DEFAULT_AZIMUTH = A;
-		DEFAULT_ELEVATION = E;
-		DEFAULT_ROTATION = R;
-		DEFAULT_WIDTH = W;
-		DEFAULT_HEIGHT = H;
-	}
-	
-	@Override
-	public int loadConfiguration(String fileName) {
-		if (super.loadConfiguration(fileName) != 0)
-			return -1;
-		if (conf.size() != 0) {
-			String pos[] = conf.get(0).split("\\s");
-			double p0 = Double.parseDouble(pos[0]);
-			double p1 = Double.parseDouble(pos[1]);
-			double p2 = Double.parseDouble(pos[2]);
-			double p3 = Double.parseDouble(pos[3]);
-			double p4 = Double.parseDouble(pos[4]);
-			setViewPosition(p0, p1, p2, p3, p4);
-			return 0;
-		}
-		return -1;
-	}
-	
 }

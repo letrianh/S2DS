@@ -215,7 +215,8 @@ public class MainWindow extends JFrame implements ActionListener {
         if (e.getSource() == openButtonSetMI) {
         	//se.buttonSetPath = openButtonSet();
         	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/DAZZLE");
-        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/LEWIS");
+        	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/LEWIS");
+        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/XMAS");
         	if (se.buttonSetPath != null) {
         		buttonSetLabel.setText(se.buttonSetPath.getName());
         		se.LoadDSFiles();
@@ -226,7 +227,8 @@ public class MainWindow extends JFrame implements ActionListener {
         else if (e.getSource() == openSpiceMI) {
         	//se.spiceFile = openSpiceFile();
         	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/2-DAZZLE.SHOW");
-        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/3-LEWIS.SHOW");
+        	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/3-LEWIS.SHOW");
+        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/4-XMAS.SHOW");
         	if (se.spiceFile != null) {
         		spiceLabel.setText(se.spiceFile.getName());
         		se.LoadSPICEfile();
@@ -257,7 +259,7 @@ public class MainWindow extends JFrame implements ActionListener {
         }
         else if (e.getSource() == saveMI) {
         	String response = JOptionPane.showInputDialog(null,
-      			  "Please give destination button's number\n (CIRCUS:97,DAZZLE:121,LEWIS:145)",
+      			  "Please give destination button's number\n (CIRCUS:97,DAZZLE:121,LEWIS:145,XMAS:157)",
       			  "Button number",
       			  JOptionPane.QUESTION_MESSAGE);
 	      	if (response != null) {

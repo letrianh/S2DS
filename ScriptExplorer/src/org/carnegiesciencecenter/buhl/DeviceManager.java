@@ -13,7 +13,6 @@ import java.util.Iterator;
  */
 public class DeviceManager {
 	
-	public static String DEFAULT_CONFIG_FILE = "/home/lion/Downloads/CSC/SHOW/devices.conf"; 
 	static public ArrayList<DsCmd> equivCmds;
 	
 	public HashMap<String,AbstractDevice> allDevices;
@@ -75,7 +74,7 @@ public class DeviceManager {
 	}
 	
 	static DeviceTypes devTypeByName(String name) {
-		if (name.startsWith("ANIM") || name.startsWith("PROJ"))
+		if (name.startsWith("ANIM") || name.startsWith("PROJ") || name.startsWith("ASKY"))
 			return DeviceTypes.SLIDE_PROJECTOR;
 		else if (name.startsWith("VPRJ"))
 			return DeviceTypes.VIDEO_PROJECTOR;
@@ -97,36 +96,18 @@ public class DeviceManager {
 			AbstractDevice dev;
 			if (type == DeviceTypes.SLIDE_PROJECTOR) {
 				dev = new SlideProjector(name,ch, allEvents);
-				((SlideProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
-				String path = SlideProjector.loadParam("IMAGE", DEFAULT_CONFIG_FILE, "PATH");
-				if (path.length() != 0)
-					SlideProjector.DEFAULT_IMAGE_PATH = path;
-				String ext = SlideProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
-				if (ext.length() != 0)
-					SlideProjector.DEFAULT_IMAGE_EXT = ext;
+				dev.loadConfiguration();
 			}
 			else if (type == DeviceTypes.PLAYER) {
 				dev = new Player(name,ch, allEvents);
 			}
 			else if (type == DeviceTypes.VIDEO_PROJECTOR) {
 				dev = new VideoProjector(name,ch, allEvents);
-				((VideoProjector) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
-				String path = VideoProjector.loadParam("IMAGE", DEFAULT_CONFIG_FILE, "PATH");
-				if (path.length() != 0)
-					VideoProjector.DEFAULT_IMAGE_PATH = path;
-				String ext = VideoProjector.loadParam("IMAGE_EXT", DEFAULT_CONFIG_FILE, "PATH");
-				if (ext.length() != 0)
-					VideoProjector.DEFAULT_IMAGE_EXT = ext;
-				path = VideoProjector.loadParam("VIDEO", DEFAULT_CONFIG_FILE, "PATH");
-				if (path.length() != 0)
-					VideoProjector.DEFAULT_VIDEO_PATH = path;
-				ext = VideoProjector.loadParam("VIDEO_EXT", DEFAULT_CONFIG_FILE, "PATH");
-				if (ext.length() != 0)
-					VideoProjector.DEFAULT_VIDEO_EXT = ext;
+				dev.loadConfiguration();
 			}
 			else if (type == DeviceTypes.INTERACTIVE) {
 				dev = new InterSystem(name,ch, allEvents);
-				((InterSystem) dev).loadConfiguration(DEFAULT_CONFIG_FILE);
+				dev.loadConfiguration();
 			}
 			else {
 				System.out.println("Unimplemented device type: " + name);
@@ -147,7 +128,10 @@ public class DeviceManager {
 		initBank("ANIM","ABCDEFGHIJKLMNOPQR");
 
 		// init PROJ
-		initBank("PROJ","AB");
+		initBank("PROJ","ABC");
+
+		// init ASKY
+		initBank("ASKY","ABCDEFG");
 
 		// init TAPE
 		initBank("SRC2","D");
@@ -226,6 +210,9 @@ public class DeviceManager {
 			}
 		}
 		else if (devTypeByName(c.deviceName) == DeviceTypes.VIDEO_PROJECTOR) {
+			// if 2 projectors are fed with the same source, we need only one Text Add
+			if (c.action.toUpperCase().startsWith("FADE") || c.action.toUpperCase().startsWith("ALT"))
+				OnlyUniqueSources(list);
 			Iterator<AbstractDevice> itr = list.iterator();
 			while (itr.hasNext()) {
 				VideoProjector p = (VideoProjector) itr.next();
@@ -278,6 +265,24 @@ public class DeviceManager {
 			return -1;
 		}
 		return 0;
+	}
+	
+	private void OnlyUniqueSources(ArrayList<AbstractDevice> list) {
+		int i=1; 
+		while (i<list.size()) {
+			VideoProjector x = (VideoProjector) list.get(i);
+			boolean isUnique = true;
+			for (int j=0; j<i; j++) {
+				VideoProjector y = (VideoProjector) list.get(j);
+				if (x.getStatus().sourceId == y.getStatus().sourceId) {
+					list.remove(i);
+					isUnique = false;
+					break;
+				}
+			}
+			if (isUnique)
+				i++;
+		}
 	}
 	
 	public void resetEquivCmds() {

@@ -46,9 +46,13 @@ public class ScriptExplorer {
 	
 	DeviceManager dm;
 	
+	public static Settings globalConf;
+	
 	ScriptExplorer() {
 		ds = new HashMap<String, DsScript>();
 		tableModel = new ScriptTableModel();
+		globalConf = new Settings();
+		globalConf.loadSettings();
 	}
 	
 	int LoadDSFiles() {
@@ -337,10 +341,10 @@ public class ScriptExplorer {
 	}
 	
 	public String getSoundFileName() {
-		String path = SlideProjector.loadParam("SOUND", DeviceManager.DEFAULT_CONFIG_FILE, "PATH");
+		String path = globalConf.getParam("COMMON", "SOUND_PATH");
 		if (path.length() == 0)
 			path = "SndPath\\DigitizedAudio\\";
-		String fname = SlideProjector.loadParam("AUDIO", DeviceManager.DEFAULT_CONFIG_FILE, "PATH");
+		String fname = globalConf.getParam("COMMON", "SOUND_FILE");
 		if (fname.length() == 0)
 			fname = spiceScript.title + ".ac3";
 		return path + fname;
@@ -349,6 +353,7 @@ public class ScriptExplorer {
 	int convert() {
 		dm = new DeviceManager();
 		dm.initDevices();
+		String executionList = "VSRC ANIM PROJ VPRJ INTER ASKY";
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = getSoundFileName();
 		allCmds = new ArrayList<DsCmd>();
@@ -401,12 +406,8 @@ public class ScriptExplorer {
 	    		}
 	    		flag = true; // just finished a RunScript call
 	    	}
-	    	else if (c.type == SpiceCmdTypes.OTHER && (
-		    			c.deviceName.toUpperCase().startsWith("VSRC") ||
-		    			c.deviceName.toUpperCase().startsWith("ANIM") ||
-		    			c.deviceName.toUpperCase().startsWith("PROJ") ||
-		    			c.deviceName.toUpperCase().startsWith("VPRJ") ||
-		    			c.deviceName.toUpperCase().startsWith("INTER") ))  
+	    	else if (c.type == SpiceCmdTypes.OTHER &&
+	    				executionList.contains(c.deviceName.trim().toUpperCase()) )  
     		{
     			dm.resetEquivCmds();
     			DeviceManager.equivCmds.add(new DsCmd(c.sectionNum, c.timeBegin, "", "", DsCmdTypes.COMMENT, 

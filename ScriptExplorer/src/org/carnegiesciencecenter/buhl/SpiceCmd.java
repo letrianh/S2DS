@@ -21,7 +21,6 @@ enum SpiceCmdTypes {
 	TAPE_PAUSE, 
 	TAPE_JUMP, 
 	AUDIO_JUMP, 
-//	SELECT_SOURCE, 
 	OTHER, 
 	TIME_DEBUG, 
 	UNKNOWN
@@ -44,7 +43,6 @@ public class SpiceCmd {
 	String channelNames;
 	String otherParams;
 	String wholeLine;
-//	static String extraInfo = ""; // actually not a good solution
 	DsCmd dsEquiv;
 	int currentTapeValue = 0;
 	boolean currentTapeRunning = false;
@@ -165,8 +163,6 @@ public class SpiceCmd {
 				type = SpiceCmdTypes.RUNSCRIPT;
 			else if (action.toUpperCase().startsWith("RUN"))
 				type = SpiceCmdTypes.RUN;
-//			else if (action.toUpperCase().startsWith("SELECTSOURCE"))
-//				type = SpiceCmdTypes.SELECT_SOURCE;
 			else if (action.toUpperCase().startsWith("SEARCH") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_SEARCH;
 			else if (action.toUpperCase().startsWith("PLAY") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
@@ -195,6 +191,8 @@ public class SpiceCmd {
 	}
 	
 	int translate() {
+		String UnusedDevices = ScriptExplorer.globalConf.getParam("COMMON", "UNUSED_DEVICES");
+		String SpiceDevices = ScriptExplorer.globalConf.getParam("COMMON", "SPICE_DEVICES");
 		dsEquiv = new DsCmd("",0);
 		dsEquiv.isNative = false;
 		dsEquiv.timeBegin = this.timeBegin;
@@ -240,52 +238,15 @@ public class SpiceCmd {
 			dsEquiv.timeBegin = 1000*60*60*100;	// use a big constant to make sure that STOP happens after everything else   
 		}
 		else {
-			//dsEquiv.wholeLine = formatComment(commentAbove) + action + "\n" + formatComment(commentBelow);
 			dsEquiv.type = DsCmdTypes.OTHER;
 			
 			// for VOLM, SPFX, LAMP, AMIX
-			if (deviceName.toUpperCase().startsWith("VOLM") 
-					|| deviceName.toUpperCase().startsWith("SPFX") 
-					|| deviceName.toUpperCase().startsWith("LAMP")
-					|| deviceName.toUpperCase().startsWith("AMIX")) 
+			if (SpiceDevices.contains(deviceName.toUpperCase())) 
 				dsEquiv.wholeLine = formatExec();
 
 			// get rid of MISC, ASKY
-			else if (deviceName.toUpperCase().startsWith("MISC") ||  deviceName.toUpperCase().startsWith("ASKY")) 
+			else if (UnusedDevices.contains(deviceName.toUpperCase())) 
 				dsEquiv.wholeLine = formatOld();
-			
-			// for VPRJ
-//			else if (deviceName.toUpperCase().startsWith("VPRJ")) {
-//				
-//				if (action.toUpperCase().startsWith("FADE") && channelNames.contains(extraInfo)) {
-//					if (!this.numericParam.startsWith("0")) {
-//						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
-//												"\t Text Add \"clip\" \"AVStream.LIVE:SVid\" 0 0 0 90 0 0 0 0\n" +
-//												"\t Text Locate \"clip\" 0 0 40 0 48 36\n" +
-//								String.format(	"\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
-//					}
-//					else
-//						dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n", this.wholeLine) +
-//							String.format("\t Text View \"clip\" %s %s 100 100 100\n", this.duration, this.numericParam);
-//				}
-//				else
-//					dsEquiv.wholeLine = formatOld();
-//			}
-
-			// for VSRC
-			else if (deviceName.toUpperCase().startsWith("VSRC")) {
-//				if (action.toUpperCase().startsWith("STILL"))
-//					dsEquiv.wholeLine = formatOld(); 
-//				else if (action.toUpperCase().startsWith("SEARCH")) {
-//					//VSRC_positions["ABCDEFGH".indexOf(channelName)] = Integer.parseInt(numericParam);
-//					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Goto \"%s\" %s", this.wholeLine, "VSRC_"+channelNames, numericParam); 
-//				}
-//				else if (action.toUpperCase().startsWith("PLAY")) {
-//					dsEquiv.wholeLine = String.format("'###TRANSLATED: %s\n\t Text Play", this.wholeLine); 
-//				}
-//				else
-//					dsEquiv.wholeLine = formatOld();
-			}
 			
 			// for TAPE
 			else if (deviceName.toUpperCase().startsWith("SRC2")) {
