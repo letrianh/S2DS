@@ -215,8 +215,8 @@ public class MainWindow extends JFrame implements ActionListener {
         if (e.getSource() == openButtonSetMI) {
         	//se.buttonSetPath = openButtonSet();
         	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/DAZZLE");
-        	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/LEWIS");
-        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/XMAS");
+        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/LEWIS");
+        	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/XMAS");
         	if (se.buttonSetPath != null) {
         		buttonSetLabel.setText(se.buttonSetPath.getName());
         		se.LoadDSFiles();
@@ -227,8 +227,8 @@ public class MainWindow extends JFrame implements ActionListener {
         else if (e.getSource() == openSpiceMI) {
         	//se.spiceFile = openSpiceFile();
         	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/2-DAZZLE.SHOW");
-        	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/3-LEWIS.SHOW");
-        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/4-XMAS.SHOW");
+        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/3-LEWIS.SHOW");
+        	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/4-XMAS.SHOW");
         	if (se.spiceFile != null) {
         		spiceLabel.setText(se.spiceFile.getName());
         		se.LoadSPICEfile();

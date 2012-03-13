@@ -519,7 +519,8 @@ public class ScriptExplorer {
 	    		flag = false;
     		if (flag || c.type == DsCmdTypes.SPICESTOP) {
     			newList.add(c);
-	    		lastCmd = c;
+    			if (flag)
+    				lastCmd = c;
     		}
 	    	if (c.category.trim().startsWith("TEXT") && (flag || !bag.isEmpty())) {
     			String s = c.removeDelay().trim();
@@ -527,19 +528,19 @@ public class ScriptExplorer {
     			String objName = pos[2];
     			while (objName.contains("\""))
     				objName = objName.replace("\"", "");
-	    		if (c.action.trim().startsWith("VIEW")) {
+	    		if (c.action.trim().startsWith("VIEW") || c.action.trim().startsWith("PLAY")) {
 	    			if (flag && !bag.containsKey(objName))
 	    				bag.put(objName, 1);
 	    		}
-	    		else if  (c.action.trim().startsWith("LOCATE")) {
+	    		else if (c.action.trim().startsWith("LOCATE")) {
     				Integer f = bag.get(objName);
     				if (f != null) {
-    					if (!flag && ((f & 2) != 0))
+    					if (!flag && ((f & 2) == 0))	// first LOCATE on the way up
     						newList.add(c);
     					f = (f | 2);
     				}
     			}
-	    		else if  (c.action.trim().startsWith("ADD")) {
+	    		else if (c.action.trim().startsWith("ADD")) {
     				Integer f = bag.get(objName);
     				if (f != null && !flag) {
     					newList.add(c);
