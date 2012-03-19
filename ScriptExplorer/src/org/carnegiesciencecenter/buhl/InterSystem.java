@@ -25,7 +25,7 @@ public class InterSystem extends AbstractDevice {
 	@Override
 	public void loadConfiguration() {
 		getStatus().usingSVID = 
-				(ScriptExplorer.globalConf.getParam(getStatus().deviceName, "SVID").toUpperCase().compareTo("YES") == 0);
+				(ScriptExplorer.globalConf.getParam("COMMON", "SVID").toUpperCase().compareTo("YES") == 0);
 	}
 
 	public void page(int n) {
