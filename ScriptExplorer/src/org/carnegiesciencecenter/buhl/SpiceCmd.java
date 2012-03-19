@@ -72,7 +72,11 @@ public class SpiceCmd {
 		if (!st.hasMoreTokens())
 			return;
 		action = st.nextToken();
-		if (action.startsWith("'TIME_DEBUG")) {
+		if (action.toUpperCase().startsWith("STOP")) {
+			type = SpiceCmdTypes.STOP;
+			return;
+		}
+		else if (action.startsWith("'TIME_DEBUG")) {
 			type = SpiceCmdTypes.TIME_DEBUG;
 			return;
 		}
@@ -92,9 +96,9 @@ public class SpiceCmd {
 			commentAbove = line.substring(line.indexOf("'")+1);
 			action = "";
 			timeDuration = 0;
-			if (commentAbove.length() == 0) { // this is empty line
-				type = SpiceCmdTypes.EMPTY;
-				}
+			//if (commentAbove.length() == 0) { // this is empty line
+			//	type = SpiceCmdTypes.EMPTY;
+			//	}
 		}
 		else {
 			if ("0123456789".indexOf(action.substring(0,1)) != -1) { // starts with time parameter

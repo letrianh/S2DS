@@ -47,12 +47,19 @@ public class ScriptExplorer {
 	DeviceManager dm;
 	
 	public static Settings globalConf;
+	String SHOW_CONF;
+	boolean isDebugOn;
 	
 	ScriptExplorer() {
 		ds = new HashMap<String, DsScript>();
 		tableModel = new ScriptTableModel();
 		globalConf = new Settings();
 		globalConf.loadSettings();
+		SHOW_CONF = globalConf.getParam("COMMON", "SHOW_CONF");
+		if (SHOW_CONF.length() != 0) {
+			globalConf.overwriteSettings(SHOW_CONF, "COMMON");
+		}		
+		isDebugOn = globalConf.getParam("DEBUG", "TIME_STAMP").startsWith("YES");
 	}
 	
 	int LoadDSFiles() {
@@ -341,10 +348,10 @@ public class ScriptExplorer {
 	}
 	
 	public String getSoundFileName() {
-		String path = globalConf.getParam("COMMON", "SOUND_PATH");
+		String path = globalConf.getParam("COMMON", "AUDIO_PATH");
 		if (path.length() == 0)
 			path = "SndPath\\DigitizedAudio\\";
-		String fname = globalConf.getParam("COMMON", "SOUND_FILE");
+		String fname = globalConf.getParam("COMMON", "AUDIO_FILE");
 		if (fname.length() == 0)
 			fname = spiceScript.title + ".ac3";
 		return path + fname;
@@ -485,8 +492,9 @@ public class ScriptExplorer {
 	    	}
 
 	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
-	    		//uncomment this line to debug
-	    		sb.append(String.format("\t\t\t\t\t\t\t'BLOCK = %2d  t = %6d  # = %2d  iCLK = %s  TAPE = %s  RUN = %s\n",
+	    		//the following line is for debug only
+	    		if (isDebugOn)
+	    			sb.append(String.format("\t\t\t\t\t\t\t'BLOCK = %2d  t = %6d  # = %2d  iCLK = %s  TAPE = %s  RUN = %s\n",
 	    				c.superOrder, c.timeBegin, c.order,
 	    				SpiceScript.timeString(c.timeBegin), SpiceScript.timeString(c.currentTapeValue), (c.currentTapeRunning?"Y":"N")));
 	    		String finalText;
@@ -554,12 +562,12 @@ public class ScriptExplorer {
 		newList.add(DsCmd.cmdJboxVol(0, 100, 100));
 		if (lastCmd != null && lastCmd.currentTapeRunning) {
 			insTime = lastCmd.timeBegin - (lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - fromTime);
-			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, fromTime));
+			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, fromTime - 360000));
 			newList.add(DsCmd.cmdJboxPlay(lastCmd.superOrder, insTime)); 
 		}
 		else {
 			insTime = lastCmd.timeBegin;
-			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff));
+			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - 360000));
 		}
 		sortByTime(newList);
 		return newList;

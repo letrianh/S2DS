@@ -43,7 +43,7 @@ public class VideoProjector extends Projector {
 		if (n != 0) {
 			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
-						DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+						"AVStream.LIVE:"+objName()));
 			}
 			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
@@ -73,7 +73,7 @@ public class VideoProjector extends Projector {
 
 			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
-						DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+						"AVStream.LIVE:"+objName()));
 			}
 			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 

@@ -54,7 +54,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	JTextArea spiceTextArea, dsTextArea;
 	static ScriptExplorer se;
 	
-	MainWindow(ScriptExplorer se_) {
+	MainWindow() {
 		super("Script Explorer - ver 0.1");
 		setBounds(100,100,800,400);
 	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -213,10 +213,11 @@ public class MainWindow extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
         if (e.getSource() == openButtonSetMI) {
-        	//se.buttonSetPath = openButtonSet();
-        	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/DAZZLE");
-        	se.buttonSetPath = new File("/home/lion/Downloads/CSC/LEWIS");
-        	//se.buttonSetPath = new File("/home/lion/Downloads/CSC/XMAS");
+        	String buttonSet = ScriptExplorer.globalConf.getParam("COMMON", "BUTTON_SET"); 
+        	if ( buttonSet.length() == 0)
+        		se.buttonSetPath = openButtonSet();
+        	else
+        		se.buttonSetPath = new File(buttonSet);
         	if (se.buttonSetPath != null) {
         		buttonSetLabel.setText(se.buttonSetPath.getName());
         		se.LoadDSFiles();
@@ -225,10 +226,11 @@ public class MainWindow extends JFrame implements ActionListener {
         	}
         } 
         else if (e.getSource() == openSpiceMI) {
-        	//se.spiceFile = openSpiceFile();
-        	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/2-DAZZLE.SHOW");
-        	se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/3-LEWIS.SHOW");
-        	//se.spiceFile = new File("/home/lion/Downloads/CSC/SHOW/4-XMAS.SHOW");
+        	String spiceSource = ScriptExplorer.globalConf.getParam("COMMON", "SPICE_FILE"); 
+        	if ( spiceSource.length() == 0)
+        		se.spiceFile = openSpiceFile();
+        	else
+        		se.spiceFile = new File(spiceSource);
         	if (se.spiceFile != null) {
         		spiceLabel.setText(se.spiceFile.getName());
         		se.LoadSPICEfile();
@@ -297,7 +299,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	 */
 	public static void main(String[] args) {
 		se = new ScriptExplorer();
-		MainWindow mainWin = new MainWindow(se);
+		MainWindow mainWin = new MainWindow();
 		
 	}
 

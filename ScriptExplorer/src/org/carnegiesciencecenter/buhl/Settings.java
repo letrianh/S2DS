@@ -69,6 +69,16 @@ public class Settings {
 		}
 	}
 	
+	public void overwriteSettings(String srcSection, String desSection) {
+		if (conf == null)
+			return;
+		HashMap<String,String> src = conf.get(srcSection);
+		HashMap<String,String> des = conf.get(desSection);
+		if (src == null || des == null)
+			return;
+		des.putAll(src);
+	}
+	
 	public String getParam(String sectionName, String key) {
 		HashMap<String,String> s;
 		s = conf.get(sectionName);

@@ -48,7 +48,7 @@ public class InterSystem extends AbstractDevice {
 
 	public String objName() {
 		if (getStatus().usingSVID)
-			return "AVStream.LIVE:SVid";
+			return "SVid";
 		else
 			return String.format("%s_%s_%02d", getStatus().deviceName, getStatus().fileName, getStatus().currentPage); 
 	}
