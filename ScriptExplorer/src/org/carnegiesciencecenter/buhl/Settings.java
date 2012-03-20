@@ -4,6 +4,7 @@
 package org.carnegiesciencecenter.buhl;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
 
@@ -12,7 +13,7 @@ import java.util.HashMap;
  *
  */
 public class Settings {
-	public String DEFAULT_CONFIG_FILE = "/home/lion/Downloads/CSC/SHOW/settings.conf";
+	public String DEFAULT_CONFIG_FILE = "settings.conf";
 	private HashMap<String,HashMap<String,String>> conf = null;
 
 	public void loadSettings() {
@@ -20,11 +21,12 @@ public class Settings {
 	}
 	
 	public void loadSettings(String fileName) {
-		System.out.println("Reading file: " + fileName);
 		String sectionName;
 		try {
-			FileReader f = new FileReader(fileName);
-			BufferedReader b = new BufferedReader(f);
+			File f = new File(fileName);
+			System.out.println("Reading file: " + f.getAbsolutePath());
+			FileReader fr = new FileReader(f);
+			BufferedReader b = new BufferedReader(fr);
 			if (conf == null)
 				conf = new HashMap<String,HashMap<String,String>>();
 			String s;
@@ -62,7 +64,7 @@ public class Settings {
 				}
 			}
 			b.close();
-			f.close();
+			fr.close();
 		}
 		catch (Exception e) {
 			System.out.println("Error reading file: " + fileName);

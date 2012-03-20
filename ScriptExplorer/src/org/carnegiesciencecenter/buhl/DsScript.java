@@ -155,7 +155,7 @@ public class DsScript {
 			//System.out.println(text.toString());
 		}
 		catch (FileNotFoundException e) {
-			System.out.println("Cannot open file:"+f.getName());
+			System.out.println("Cannot open file:"+f.getAbsolutePath());
 		} 
 		finally {
 			if (in != null)

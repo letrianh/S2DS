@@ -213,7 +213,8 @@ public class MainWindow extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
         if (e.getSource() == openButtonSetMI) {
-        	String buttonSet = ScriptExplorer.globalConf.getParam("COMMON", "BUTTON_SET"); 
+        	String buttonSet = ScriptExplorer.globalConf.getParam("COMMON", "DS_PATH") +
+        						ScriptExplorer.globalConf.getParam("COMMON", "BUTTON_SET"); 
         	if ( buttonSet.length() == 0)
         		se.buttonSetPath = openButtonSet();
         	else
@@ -226,7 +227,8 @@ public class MainWindow extends JFrame implements ActionListener {
         	}
         } 
         else if (e.getSource() == openSpiceMI) {
-        	String spiceSource = ScriptExplorer.globalConf.getParam("COMMON", "SPICE_FILE"); 
+        	String spiceSource = ScriptExplorer.globalConf.getParam("COMMON", "SPICE_PATH") +
+        						ScriptExplorer.globalConf.getParam("COMMON", "SPICE_FILE"); 
         	if ( spiceSource.length() == 0)
         		se.spiceFile = openSpiceFile();
         	else
@@ -253,8 +255,6 @@ public class MainWindow extends JFrame implements ActionListener {
         	}
         } 
         else if (e.getSource() == convertMI) {
-			String path = se.spiceFile.getAbsolutePath();
-			se.outputPath = path.substring(0,path.lastIndexOf(File.separator));
         	se.convert();
     		dsTextArea.setText(se.output);
     		dsTextArea.setCaretPosition(0);
@@ -266,7 +266,15 @@ public class MainWindow extends JFrame implements ActionListener {
       			  JOptionPane.QUESTION_MESSAGE);
 	      	if (response != null) {
 	        	se.buttonStartNum = Integer.parseInt(response);
-	    		se.saveToFile();
+	        	se.outputFilePath = se.getOutFileName(se.buttonStartNum);
+	        	File f = new File(se.outputFilePath);
+	    		if (f.exists()){
+	    			if (JOptionPane.showConfirmDialog(
+	        			    this, "Overwrite existing file?", "CAUTION", JOptionPane.YES_NO_OPTION | JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)
+	    				se.saveToFile();
+	    		}
+	    		else
+    				se.saveToFile();
 	      	}
         }
         else if (e.getSource() == splitMI) {

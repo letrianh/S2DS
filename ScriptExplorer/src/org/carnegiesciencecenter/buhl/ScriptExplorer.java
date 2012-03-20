@@ -36,6 +36,7 @@ public class ScriptExplorer {
 	ArrayList<DsCmd> allCmds;
 	String output;
 	String outputPath;
+	String outputFilePath;
 	int countYes;
 	HashMap<String,String> namePairs;
 	ArrayList<String> usedNames;
@@ -59,7 +60,12 @@ public class ScriptExplorer {
 		if (SHOW_CONF.length() != 0) {
 			globalConf.overwriteSettings(SHOW_CONF, "COMMON");
 		}		
+		String ENV = globalConf.getParam("COMMON", "OS");
+		if (ENV.length() != 0) {
+			globalConf.overwriteSettings(ENV, "COMMON");
+		}		
 		isDebugOn = globalConf.getParam("DEBUG", "TIME_STAMP").startsWith("YES");
+		outputPath = globalConf.getParam("COMMON", "OUTPUT_PATH");
 	}
 	
 	int LoadDSFiles() {
@@ -80,7 +86,7 @@ public class ScriptExplorer {
 			//System.out.println(line);
 		}
 		catch (FileNotFoundException e) {
-			System.out.println("Cannot open file: Captions.txt");
+			System.out.println("Cannot open file: " + cap.getAbsolutePath());
 		} 
 		finally {
 			if (in != null)
@@ -264,20 +270,19 @@ public class ScriptExplorer {
 	}
 	
 	String getOutFileName(int num) {
-		return "F" + Integer.toString(num) + ".sct";
+		return outputPath + "F" + Integer.toString(num) + ".sct";
 	}
 	
 	void saveToFile() {
-		String outFileName = getOutFileName(buttonStartNum);
 		try {
-			File f = new File(outputPath + File.separator + outFileName);
+			File f = new File(outputFilePath);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(f));
 			// for Windows platform, change end-of-line to CR LF
 			writer.write(formatTitleBox(buttonStartNum,0).replaceAll("(\n)", "\r\n"));
 			writer.write(output.replaceAll("(\n)", "\r\n"));
 			writer.flush();
 			writer.close();
-			System.out.println("Written to:" + outputPath + File.separator + outFileName + "\n");
+			System.out.println("Written to:" + outputFilePath + "\n");
 		} catch (IOException e) {
 			System.out.println("Cannot write output!");
 			e.printStackTrace();
