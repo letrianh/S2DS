@@ -50,6 +50,7 @@ public class ScriptExplorer {
 	public static Settings globalConf;
 	String SHOW_CONF;
 	boolean isDebugOn;
+	static boolean isView100;
 	
 	ScriptExplorer() {
 		ds = new HashMap<String, DsScript>();
@@ -64,8 +65,9 @@ public class ScriptExplorer {
 		if (ENV.length() != 0) {
 			globalConf.overwriteSettings(ENV, "COMMON");
 		}		
-		isDebugOn = globalConf.getParam("DEBUG", "TIME_STAMP").startsWith("YES");
+		isDebugOn = globalConf.getParam("DEBUG", "TIME_STAMP").startsWith("YES");	
 		outputPath = globalConf.getParam("COMMON", "OUTPUT_PATH");
+		isView100 = globalConf.getParam("COMMON", "VIEW100").startsWith("YES");	
 	}
 	
 	int LoadDSFiles() {
@@ -368,6 +370,10 @@ public class ScriptExplorer {
 		String executionList = "VSRC ANIM PROJ VPRJ INTER ASKY";
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = getSoundFileName();
+		
+		// load list for auto orientation
+		DsCmd.loadImgList();
+		
 		allCmds = new ArrayList<DsCmd>();
 		allCmds.add(new DsCmd(0,	";======================================================================\n" + 
 									"\t;PUT ADDITIONAL \"Text Add\" HERE. MAY NEED SOME DELAY AFTER THAT.\n" +

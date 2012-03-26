@@ -79,6 +79,8 @@ public class Settings {
 		if (src == null || des == null)
 			return;
 		des.putAll(src);
+		System.out.println("New settings:");
+		System.out.println(des.toString());
 	}
 	
 	public String getParam(String sectionName, String key) {

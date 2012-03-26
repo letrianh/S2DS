@@ -42,8 +42,14 @@ public class VideoProjector extends Projector {
 
 		if (n != 0) {
 			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
-				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+				if (((InterStatus) getStatus().currentSource.getStatus()).usingSVID) {
+					DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
 						"AVStream.LIVE:"+objName()));
+				}
+				else {
+					DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+							DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+				}
 			}
 			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
@@ -72,8 +78,14 @@ public class VideoProjector extends Projector {
 			getStatus().brightness = n;
 
 			if (getStatus().currentSource.type == DeviceTypes.INTERACTIVE) {
-				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+				if (((InterStatus) getStatus().currentSource.getStatus()).usingSVID) {
+					DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
 						"AVStream.LIVE:"+objName()));
+				}
+				else {
+					DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
+							DEFAULT_IMAGE_PATH+objName()+DEFAULT_IMAGE_EXT));
+				}
 			}
 			else if (getStatus().currentSource.type == DeviceTypes.PLAYER) { 
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 

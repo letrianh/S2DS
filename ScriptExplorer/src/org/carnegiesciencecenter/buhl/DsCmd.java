@@ -1,6 +1,20 @@
 package org.carnegiesciencecenter.buhl;
 
+import java.awt.Dimension;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.StringTokenizer;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
 
 enum DsCmdTypes {
 	STOP,		// DS Stop 
@@ -32,6 +46,8 @@ public class DsCmd implements Comparable<DsCmd> {
 	boolean isNative = true;		// This cmd is from DS file or was translated from SPICE
 	
 	static int GuardTime = 10;			// Adjust Text Add and Text Remove time
+	static HashMap<String,Dimension> imageList = null;
+	static boolean isAutoOrientation = false;
 	
 	// This constructor is used only when we need to insert COMMENT or EMPTY line to the generated script
 	DsCmd(int runTime, String comment, int o) {
@@ -180,6 +196,7 @@ public class DsCmd implements Comparable<DsCmd> {
 	}
 
 	static public String formatLocate(String name, double T, double A, double E, double R, double W, double H) {
+		
 		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, ((double)T)/100, A, E, R, W, H); 
 	}
 
@@ -238,10 +255,20 @@ public class DsCmd implements Comparable<DsCmd> {
 	//========================================
 
 	static public DsCmd cmdView(int num, int time, String name, double T, double N) {
+		if (N>0 && ScriptExplorer.isView100)
+			N = 100;
 		return new DsCmd(num, time, "TEXT", "VIEW", DsCmdTypes.OTHER, formatView(name, T, N));
 	}
 
 	static public DsCmd cmdLocate(int num, int time, String name, double T, double A, double E, double R, double W, double H) {
+		if (isAutoOrientation) {
+			Dimension dim = imageList.get(name);
+			if (dim != null && dim.width<dim.height) {
+				double tmp = W;
+				W = H;
+				H = tmp;
+			}
+		}
 		return new DsCmd(num, time, "TEXT", "LOCATE", DsCmdTypes.OTHER, formatLocate(name, T, A, E, R, W, H));
 	}
 
@@ -310,4 +337,68 @@ public class DsCmd implements Comparable<DsCmd> {
 				return (this.order - o.order);
 		}
 	}
+	
+    static Dimension getImageDim(final String path) {
+	    Dimension result = null;
+	    String suffix = DsCmd.getFileSuffix(path);
+	    Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
+	    if (iter.hasNext()) {
+	        ImageReader reader = iter.next();
+	        try {
+	            ImageInputStream stream = new FileImageInputStream(new File(path));
+	            reader.setInput(stream);
+	            int width = reader.getWidth(reader.getMinIndex());
+	            int height = reader.getHeight(reader.getMinIndex());
+	            result = new Dimension(width, height);
+	        } catch (IOException e) {
+	            System.out.println(e.getMessage());
+	        } finally {
+	            reader.dispose();
+	        }
+	    } 
+	    else {
+	        System.out.println("No reader found for given format: " + suffix);
+	    }
+	    return result;
+    }
+
+    static String getFileSuffix(final String path) {
+        String result = null;
+        if (path != null) {
+            result = "";
+            if (path.lastIndexOf('.') != -1) {
+                result = path.substring(path.lastIndexOf('.'));
+                if (result.startsWith(".")) {
+                    result = result.substring(1);
+                }
+            }
+        }
+        return result;
+    }
+    
+    static void loadImgList() {
+    	if (ScriptExplorer.globalConf.getParam("COMMON", "AUTO_IMAGE_ORIENTATION").startsWith("YES")) {
+    		imageList = new HashMap<String,Dimension>();
+    		String strDir=ScriptExplorer.globalConf.getParam("COMMON", "AUTO_IMAGE_ORIENTATION_PATH");
+    		String strList=ScriptExplorer.globalConf.getParam("COMMON", "AUTO_IMAGE_ORIENTATION_LIST");
+    		String fileName = strDir + strList;
+    		try {
+    			FileReader f = new FileReader(fileName);
+    			BufferedReader b = new BufferedReader(f);
+    			String s;
+    			while((s = b.readLine()) != null) {
+    				imageList.put(s, DsCmd.getImageDim(strDir + s +
+    						ScriptExplorer.globalConf.getParam("COMMON","IMAGE_EXT")));
+    			}
+    			b.close();
+    			f.close();
+    			isAutoOrientation = true;
+    		}
+    		catch (Exception e) {
+    			System.out.println("Cannot read list from " + fileName);
+    		}
+    		
+    	}
+    }
+
 }
