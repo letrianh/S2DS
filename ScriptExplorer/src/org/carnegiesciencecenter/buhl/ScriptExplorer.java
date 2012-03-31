@@ -367,7 +367,8 @@ public class ScriptExplorer {
 	int convert() {
 		dm = new DeviceManager();
 		dm.initDevices();
-		String executionList = "VSRC ANIM PROJ VPRJ INTER ASKY";
+		String executionList = globalConf.getParam("COMMON", "MANAGED_DEVICES");
+		String unusedList = globalConf.getParam("COMMON", "UNUSED_DEVICES");
 		String FS = System.getProperty("file.separator");
 		String SoundFileName = getSoundFileName();
 		
@@ -425,7 +426,8 @@ public class ScriptExplorer {
 	    		flag = true; // just finished a RunScript call
 	    	}
 	    	else if (c.type == SpiceCmdTypes.OTHER &&
-	    				executionList.contains(c.deviceName.trim().toUpperCase()) )  
+	    				executionList.contains(c.deviceName.trim().toUpperCase()) &&
+	    				!unusedList.contains(c.deviceName.trim().toUpperCase()))  
     		{
     			dm.resetEquivCmds();
     			DeviceManager.equivCmds.add(new DsCmd(c.sectionNum, c.timeBegin, "", "", DsCmdTypes.COMMENT, 

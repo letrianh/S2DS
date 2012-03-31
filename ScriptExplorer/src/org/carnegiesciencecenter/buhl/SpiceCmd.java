@@ -165,7 +165,7 @@ public class SpiceCmd {
 				type = SpiceCmdTypes.STOP;
 			else if (action.toUpperCase().startsWith("RUNSCRIPT"))
 				type = SpiceCmdTypes.RUNSCRIPT;
-			else if (action.toUpperCase().startsWith("RUN"))
+			else if (action.toUpperCase().compareTo("RUN") == 0)
 				type = SpiceCmdTypes.RUN;
 			else if (action.toUpperCase().startsWith("SEARCH") && deviceName.startsWith("SRC2") && channelNames.startsWith("D"))
 				type = SpiceCmdTypes.TAPE_SEARCH;

@@ -15,8 +15,11 @@ import java.util.ArrayList;
 enum DeviceTypes {
 	SLIDE_PROJECTOR,
 	VIDEO_PROJECTOR,
+	SLEW_PROJECTOR,
 	INTERACTIVE,
 	PLAYER,
+	MOTOR,
+	SLEW,
 	OTHER
 }
 

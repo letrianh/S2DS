@@ -40,8 +40,20 @@ public class DeviceManager {
 		return ((SlideProjector)getDevice(name, channel));
 	}
 	
+	public SlewProjector getSlewProjector(String name, String channel) {
+		return ((SlewProjector)getDevice(name, channel));
+	}
+	
 	public Player getPlayer(String name, String channel) {
 		return ((Player)getDevice(name, channel));
+	}
+	
+	public Slew getSlew(String name, String channel) {
+		return ((Slew)getDevice(name, channel));
+	}
+	
+	public Motor getMotor(String name, String channel) {
+		return ((Motor)getDevice(name, channel));
 	}
 	
 	public InterSystem getInterSystem(String name, String channel) {
@@ -74,14 +86,20 @@ public class DeviceManager {
 	}
 	
 	static DeviceTypes devTypeByName(String name) {
-		if (name.startsWith("ANIM") || name.startsWith("PROJ") || name.startsWith("ASKY"))
+		if (name.startsWith("ANIM") || name.startsWith("ASKY") || name.startsWith("PANS"))
 			return DeviceTypes.SLIDE_PROJECTOR;
 		else if (name.startsWith("VPRJ"))
 			return DeviceTypes.VIDEO_PROJECTOR;
+		else if (name.startsWith("PROJ"))
+			return DeviceTypes.SLEW_PROJECTOR;
 		else if (name.startsWith("SRC2") || name.startsWith("VSRC"))
 			return DeviceTypes.PLAYER;
 		else if (name.startsWith("INTER"))
 			return DeviceTypes.INTERACTIVE;
+		else if (name.startsWith("SLEW"))
+			return DeviceTypes.SLEW;
+		else if (name.startsWith("MOTR"))
+			return DeviceTypes.MOTOR;
 		else
 			return DeviceTypes.OTHER;
 	}
@@ -109,6 +127,18 @@ public class DeviceManager {
 				dev = new InterSystem(name,ch, allEvents);
 				dev.loadConfiguration();
 			}
+			else if (type == DeviceTypes.SLEW) {
+				dev = new Slew(name,ch, allEvents);
+				dev.loadConfiguration();
+			}
+			else if (type == DeviceTypes.MOTOR) {
+				dev = new Motor(name,ch, allEvents);
+				dev.loadConfiguration();
+			}
+			else if (type == DeviceTypes.SLEW_PROJECTOR) {
+				dev = new SlewProjector(name,ch, allEvents);
+				dev.loadConfiguration();
+			}
 			else {
 				System.out.println("Unimplemented device type: " + name);
 				return;
@@ -126,9 +156,6 @@ public class DeviceManager {
 
 		// init ANIM
 		initBank("ANIM","ABCDEFGHIJKLMNOPQR");
-
-		// init PROJ
-		initBank("PROJ","ABC");
 
 		// init ASKY
 		initBank("ASKY","ABCDEFG");
@@ -151,7 +178,25 @@ public class DeviceManager {
 		VideoProjector.addSource(3, getDevice("VSRC","C"));
 		VideoProjector.addSource(4, getDevice("VSRC","D"));
 		VideoProjector.addSource(7, getDevice("INTER","A"));
-	}
+
+		// init SLEW
+		initBank("SLEW","ABCD");
+
+		// init MOTR
+		initBank("MOTR","AB");
+
+		// init PROJ
+		initBank("PROJ","AB");
+		
+		getSlewProjector("PROJ","A").setup(getSlew("SLEW","A"), getSlew("SLEW","B"), 
+				getMotor("MOTR","A"));
+		getSlewProjector("PROJ","B").setup(getSlew("SLEW","C"), getSlew("SLEW","D"), 
+				getMotor("MOTR","B"));
+
+		// init PANS
+		initBank("PANS","ABCDEFGHIJKLMN");
+
+}
 	
 	private int toTime(String s) {
 		return 100*Integer.parseInt(s);
@@ -162,7 +207,8 @@ public class DeviceManager {
 		System.out.println(c.wholeLine);
 		
 		ArrayList<AbstractDevice> list = getDeviceSet(c.deviceName, c.channelNames);
-		if (devTypeByName(c.deviceName) == DeviceTypes.SLIDE_PROJECTOR) {
+		if (devTypeByName(c.deviceName) == DeviceTypes.SLIDE_PROJECTOR ||
+				devTypeByName(c.deviceName) == DeviceTypes.SLEW_PROJECTOR) {
 			Iterator<AbstractDevice> itr = list.iterator();
 			while (itr.hasNext()) {
 				SlideProjector p = (SlideProjector) itr.next();
@@ -202,6 +248,40 @@ public class DeviceManager {
 						p.searchCh(Integer.parseInt(c.numericParam.substring(2)));
 					else
 						p.search(Integer.parseInt(c.numericParam));
+				}
+				else {
+					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+					return -1;
+				}
+			}
+		}
+		else if (devTypeByName(c.deviceName) == DeviceTypes.SLEW) {
+			for (int i=0; i<list.size(); i++) {
+				Slew p = (Slew) list.get(i);
+				boolean wait = false;
+				for (int j=i+1; j<list.size(); j++)
+					if (p.peerSlew == list.get(j)) {
+						wait = true;
+						break;
+					}
+				p.setClock(c.sectionNum, c.timeBegin);
+				if (c.action.toUpperCase().startsWith("RUNFWD")) {
+					p.setPosition(Integer.parseInt(c.duration),Integer.parseInt(c.numericParam), wait);
+				}
+				else {
+					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);
+					return -1;
+				}
+			}
+		}
+		else if (devTypeByName(c.deviceName) == DeviceTypes.MOTOR) {
+			Iterator<AbstractDevice> itr = list.iterator();
+			while (itr.hasNext()) {
+				Motor p = (Motor) itr.next();
+				p.setClock(c.sectionNum, c.timeBegin);
+				if (c.action.toUpperCase().startsWith("FWDMOTOR") ||
+						c.action.toUpperCase().startsWith("REVMOTOR")) {
+					p.setZoom(toTime(c.duration),Integer.parseInt(c.numericParam));
 				}
 				else {
 					System.out.println("Unimplemented command " + c.action + " for device " + c.deviceName);

@@ -261,7 +261,7 @@ public class MainWindow extends JFrame implements ActionListener {
         }
         else if (e.getSource() == saveMI) {
         	String response = JOptionPane.showInputDialog(null,
-      			  "Please give destination button's number\n (CIRCUS:97,DAZZLE:121,LEWIS:145,XMAS:157)",
+      			  "Please give destination button's number\n (CIRCUS:97,DAZZLE:121,LEWIS:145,XMAS:157,LSTAR:217)",
       			  "Button number",
       			  JOptionPane.QUESTION_MESSAGE);
 	      	if (response != null) {
@@ -279,7 +279,7 @@ public class MainWindow extends JFrame implements ActionListener {
         }
         else if (e.getSource() == splitMI) {
         	String response = JOptionPane.showInputDialog(null,
-        			  "Please give the first button's number\n (CIRCUS:109,DAZZLE:133,LEWIS:157)",
+        			  "Please give the first button's number\n (CIRCUS:109,DAZZLE:133,LEWIS:157,LSTAR:229)",
         			  "First button number",
         			  JOptionPane.QUESTION_MESSAGE);
         	if (response != null) {
