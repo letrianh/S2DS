@@ -15,7 +15,7 @@ public class Slew extends AbstractDevice {
 	Slew peerSlew;
 	double minPosition, maxPosition;
 	double minValue, maxValue;
-	double tripTime = 500; 	// time (hundredth of sec) to rotate from 0 to 4095
+	double tripTime = 1000; 	// time (hundredth of sec) to rotate from 0 to 4095
 
 	Slew(String name, String ch, ArrayList<DeviceStatus> l) {
 		super(name, ch, new SlewStatus(), l);
@@ -52,7 +52,7 @@ public class Slew extends AbstractDevice {
 
 		if (S == 0)
 			S = 100;
-		int T = (int) (Math.abs(getStatus().position-n)/((maxPosition-minPosition)/tripTime*(S/100)));
+		int T = (int) (Math.abs(getStatus().position-n)/((maxPosition-minPosition)/tripTime*(((double)S)/100)));
 		getStatus().position = n;
 		if (!waitForPeer)
 			currentProjector.repaint(getStatus().atTime, T);
@@ -66,6 +66,7 @@ public class Slew extends AbstractDevice {
 	public void loadConfiguration() {
 		setRange(-120,120);
 		setMinMax(0,4095);
+		setTripTime(1000);
 		String position = ScriptExplorer.globalConf.getParam(getName(), "RANGE");
 		if (position.length() != 0) {
 			String pos[] = position.split("\\s");
@@ -80,6 +81,11 @@ public class Slew extends AbstractDevice {
 			double p1 = Double.parseDouble(pos[1]);
 			setMinMax(p0, p1);
 		}
+		position = ScriptExplorer.globalConf.getParam(getName(), "TRIP_TIME");
+		if (position.length() != 0) {
+			double p0 = Double.parseDouble(position);
+			setTripTime(p0);
+		}
 	}
 
 	public void setRange(double minV, double maxV) {
@@ -90,5 +96,9 @@ public class Slew extends AbstractDevice {
 	public void setMinMax(double minP, double maxP) {
 		minPosition = minP;
 		maxPosition = maxP;
+	}
+	
+	public void setTripTime(double T) {
+		tripTime = T;
 	}
 }
