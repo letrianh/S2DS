@@ -56,6 +56,7 @@ public class ScriptExplorer {
 		ds = new HashMap<String, DsScript>();
 		tableModel = new ScriptTableModel();
 		globalConf = new Settings();
+		globalConf.openXMLConfigFile();
 		globalConf.loadSettings();
 		SHOW_CONF = globalConf.getParam("COMMON", "SHOW_CONF");
 		if (SHOW_CONF.length() != 0) {
