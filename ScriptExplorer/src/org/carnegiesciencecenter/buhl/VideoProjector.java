@@ -55,7 +55,7 @@ public class VideoProjector extends Projector {
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
 						DEFAULT_VIDEO_PATH+objName()+DEFAULT_VIDEO_EXT));
 				DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), 
-						((Player)getStatus().currentSource).getStatus().position));
+						((Player)getStatus().currentSource).getStatus().currentTime));
 			}
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
@@ -91,7 +91,7 @@ public class VideoProjector extends Projector {
 				DeviceManager.equivCmds.add(DsCmd.cmdAddImage(getStatus().clockId, getStatus().atTime, objName(), 
 						DEFAULT_VIDEO_PATH+objName()+DEFAULT_VIDEO_EXT));
 				DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), 
-						((Player)getStatus().currentSource).getStatus().position));
+						((Player)getStatus().currentSource).getStatus().currentTime));
 			}
 			DeviceManager.equivCmds.add(DsCmd.cmdLocate(getStatus().clockId, getStatus().atTime, objName(), 0, 
 					DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));

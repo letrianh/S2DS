@@ -20,15 +20,21 @@ public class Player extends AbstractDevice {
 		getStatus().speed = s;
 		getStatus().chapter = 0;
 		getStatus().position = 0;
+		getStatus().isPlaying = false;
 	}
 	
 	public void setSpeed(int n) {
 		getStatus().speed = n;
 	}
 	
+	public double timeOfPosition(int n) {
+		return ((double)n)*100/getStatus().speed;
+	}
+	
 	public void searchCh(int n) {
 		getStatus().position = 0;
 		getStatus().chapter = n;
+		getStatus().currentTime = timeOfPosition(n);
 		getStatus().state = DeviceState.STABLE;
 		this.recordStatus();
 		DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), 0));
@@ -36,14 +42,16 @@ public class Player extends AbstractDevice {
 
 	public void search(int n) {
 		getStatus().position = n;
+		getStatus().currentTime = timeOfPosition(n);
 		getStatus().state = DeviceState.STABLE;
 		this.recordStatus();
-		DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), n*100/getStatus().speed));
+		DeviceManager.equivCmds.add(DsCmd.cmdGoto(getStatus().clockId, getStatus().atTime, objName(), getStatus().currentTime));
 	}
 
 	public void still() {
 		if (getStatus().isPlaying) {
 			getStatus().position += (getStatus().atTime - getStatus().prevTime)*getStatus().speed/100;
+			getStatus().currentTime = timeOfPosition(getStatus().position);
 			getStatus().isPlaying = false;
 			getStatus().state = DeviceState.STABLE;
 			this.recordStatus();
@@ -70,6 +78,7 @@ public class Player extends AbstractDevice {
 			this.recordStatus();
 			getStatus().atTime += (n - getStatus().position)/getStatus().speed*100; 
 			getStatus().position = n;
+			getStatus().currentTime = timeOfPosition(n);
 			DeviceManager.equivCmds.add(DsCmd.cmdPause(getStatus().clockId, getStatus().atTime, objName()));
 			this.recordStatus();
 		}
