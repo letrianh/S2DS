@@ -201,15 +201,15 @@ public class DsCmd implements Comparable<DsCmd> {
 	}
 
 	static public String formatAddImage(String name, String fileName, double W, double H, double M, double XO, double YO) {
-		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, XO, YO, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f black\n", name, fileName, W, H, M, XO, YO, 0.0, 0.0); 
 	}
 
 	static public String formatAddImage(String name, String fileName, double W, double H, double M) {
-		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, W, H, M, 0.0, 0.0, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f black\n", name, fileName, W, H, M, 0.0, 0.0, 0.0, 0.0); 
 	}
 
 	static public String formatAddImage(String name, String fileName) {
-		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f\n", name, fileName, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 0.0); 
+		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f black\n", name, fileName, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0, 0.0); 
 	}
 
 	static public String formatRemove(String name) {
