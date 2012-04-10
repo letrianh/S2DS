@@ -22,6 +22,7 @@ public class Slew extends AbstractDevice {
 		type = DeviceTypes.SLEW;
 	}
 
+	@Override
 	public SlewStatus getStatus() {
 		return (SlewStatus) status;
 	}

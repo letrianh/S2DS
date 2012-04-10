@@ -6,6 +6,7 @@ public class Player extends AbstractDevice {
 	
 	static int DEFAULT_SPEED = 30;
 	
+	@Override
 	public PlayerStatus getStatus() {
 		return (PlayerStatus) status;
 	}
@@ -76,6 +77,7 @@ public class Player extends AbstractDevice {
 		// ignore PLAY if isPlaying==true
 	}
 	
+	@Override
 	public String objName() {
 		if (getStatus().chapter != 0)
 			return String.format("%s_%d", super.objName(), getStatus().chapter);

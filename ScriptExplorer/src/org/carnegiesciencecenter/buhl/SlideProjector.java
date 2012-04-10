@@ -13,6 +13,7 @@ public class SlideProjector extends Projector {
 	
 	static int DEFAULT_MAX_NUM = 80;
 	
+	@Override
 	public SlideProjectorStatus getStatus() {
 		return (SlideProjectorStatus) status;
 	}
@@ -125,6 +126,7 @@ public class SlideProjector extends Projector {
 			DeviceManager.equivCmds.add(DsCmd.cmdView(getStatus().clockId, getStatus().atTime, objName(), 0, 0));
 	}
 	
+	@Override
 	public String objName() {
 		return String.format("%s_%02d", super.objName(), getStatus().currentSlide); 
 	}

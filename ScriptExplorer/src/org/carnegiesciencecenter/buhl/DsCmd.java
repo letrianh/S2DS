@@ -2,10 +2,8 @@ package org.carnegiesciencecenter.buhl;
 
 import java.awt.Dimension;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -192,12 +190,12 @@ public class DsCmd implements Comparable<DsCmd> {
 	//======================================
 	
 	static public String formatView(String name, double T, double N) {
-		return String.format("Text View \"%s\" %.2f %.2f 100 100 100\n", name, ((double)T)/100, N); 
+		return String.format("Text View \"%s\" %.2f %.2f 100 100 100\n", name, T/100, N); 
 	}
 
 	static public String formatLocate(String name, double T, double A, double E, double R, double W, double H) {
 		
-		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, ((double)T)/100, A, E, R, W, H); 
+		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, T/100, A, E, R, W, H); 
 	}
 
 	static public String formatAddImage(String name, String fileName, double W, double H, double M, double XO, double YO) {
@@ -225,7 +223,7 @@ public class DsCmd implements Comparable<DsCmd> {
 	}
 
 	static public String formatGoto(String name, double T) {
-		return String.format("Text Goto \"%s\" %.2f", name, ((double)T)/100); 
+		return String.format("Text Goto \"%s\" %.2f", name, T/100); 
 	}
 
 	static public String formatCueExec(String oldCue) {
@@ -245,7 +243,7 @@ public class DsCmd implements Comparable<DsCmd> {
 	}
 	
 	static public String formatJboxGoto(double position) {
-		return String.format("Jbox1 Goto \"audio\" %.2f", ((double)position)/100); 
+		return String.format("Jbox1 Goto \"audio\" %.2f", position/100); 
 	}
 	
 	static public String formatJboxPlay() {

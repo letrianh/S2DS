@@ -14,6 +14,7 @@ public class VideoProjector extends Projector {
 
 	static private HashMap<Integer,AbstractDevice> sources = null;
 
+	@Override
 	public VideoProjectorStatus getStatus() {
 		return (VideoProjectorStatus) status;
 	}
@@ -126,6 +127,7 @@ public class VideoProjector extends Projector {
 		this.recordStatus();
 	}
 	
+	@Override
 	public String objName() {
 		if (getStatus().currentSource != null)
 			return getStatus().currentSource.objName();

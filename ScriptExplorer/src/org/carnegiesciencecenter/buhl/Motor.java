@@ -16,6 +16,7 @@ public class Motor extends AbstractDevice {
 	double minHeight, maxHeight;
 	double minPosition, maxPosition;
 	
+	@Override
 	public MotorStatus getStatus() {
 		return (MotorStatus) status;
 	}

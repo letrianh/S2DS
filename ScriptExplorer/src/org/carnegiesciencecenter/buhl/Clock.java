@@ -18,6 +18,7 @@ public class Clock {
 		clock = Clock.timeValue(s);
 	}
 	
+	@Override
 	public String toString() {
 		return timeString(clock);
 	}

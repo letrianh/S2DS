@@ -11,6 +11,7 @@ import java.util.ArrayList;
  */
 public class InterSystem extends AbstractDevice {
 
+	@Override
 	public InterStatus getStatus() {
 		return (InterStatus) status;
 	}
@@ -46,6 +47,7 @@ public class InterSystem extends AbstractDevice {
 		page(0);
 	}
 
+	@Override
 	public String objName() {
 		if (getStatus().usingSVID)
 			return "SVid";

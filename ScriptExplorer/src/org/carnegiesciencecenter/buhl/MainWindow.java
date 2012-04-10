@@ -5,18 +5,15 @@ package org.carnegiesciencecenter.buhl;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 
-import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -30,7 +27,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.RowSorter;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
@@ -119,14 +115,14 @@ public class MainWindow extends JFrame implements ActionListener {
 		
 		// create spice text area and add to panel
 		spiceTextArea = new JTextArea();
-		spiceTextArea.setAlignmentX(JTextArea.LEFT_ALIGNMENT);
+		spiceTextArea.setAlignmentX(Component.LEFT_ALIGNMENT);
 		spiceTextArea.setLineWrap(false);
 		spiceTextArea.setFont(new Font("Courier New", Font.PLAIN, 16));
 		JScrollPane spiceTextPane = new JScrollPane(spiceTextArea);
 
 		// create ds text area and add to panel
 		dsTextArea = new JTextArea();
-		dsTextArea.setAlignmentX(JTextArea.LEFT_ALIGNMENT);
+		dsTextArea.setAlignmentX(Component.LEFT_ALIGNMENT);
 		dsTextArea.setLineWrap(false);
 		dsTextArea.setFont(new Font("Courier New", Font.PLAIN, 16));
 		JScrollPane dsTextPane = new JScrollPane(dsTextArea);
@@ -181,7 +177,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		splitMI.addActionListener(this);
 		cutSeqMI.addActionListener(this);
 		
-		this.setExtendedState(this.getExtendedState()|JFrame.MAXIMIZED_BOTH);
+		this.setExtendedState(this.getExtendedState()|Frame.MAXIMIZED_BOTH);
 
 		setVisible(true);
 	}

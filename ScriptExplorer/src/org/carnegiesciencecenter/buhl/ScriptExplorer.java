@@ -194,7 +194,8 @@ public class ScriptExplorer {
 		
 		// sort used names to ensure that ShowNext will work
 		Collections.sort(usedNames, new Comparator<String>() {
-		    public int compare(String o1, String o2) {
+		    @Override
+			public int compare(String o1, String o2) {
 		        return Integer.parseInt(o1) - Integer.parseInt(o2);
 		    }
 		});
@@ -733,37 +734,44 @@ class ScriptTableModel extends AbstractTableModel {
             "Commands"};
 	Object[][] data = {{"","","","","","","",""}};
 
-    public int getColumnCount() {
+    @Override
+	public int getColumnCount() {
         return columnNames.length;
     }
 
-    public int getRowCount() {
+    @Override
+	public int getRowCount() {
         return data.length;
     }
 
-    public String getColumnName(int col) {
+    @Override
+	public String getColumnName(int col) {
         return columnNames[col];
     }
 
-    public Object getValueAt(int row, int col) {
+    @Override
+	public Object getValueAt(int row, int col) {
     	if (0<=row && row<=getRowCount() && 0<=col && col <=getColumnCount())
     		return data[row][col];
     	else
     		return null;
     }
 
-    public Class<?> getColumnClass(int c) {
+    @Override
+	public Class<?> getColumnClass(int c) {
     	if (getValueAt(0, c) == null)
     		return Object.class;
     	else
     		return getValueAt(0, c).getClass();
     }
 
-    public boolean isCellEditable(int row, int col) {
+    @Override
+	public boolean isCellEditable(int row, int col) {
         return false;
     }
 
-    public void setValueAt(Object value, int row, int col) {
+    @Override
+	public void setValueAt(Object value, int row, int col) {
     	if (0<=row && row<=getRowCount() && 0<=col && col <=getColumnCount()) {
     		data[row][col] = value;
     		fireTableCellUpdated(row, col);

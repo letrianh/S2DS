@@ -1,6 +1,5 @@
 package org.carnegiesciencecenter.buhl;
 
-import java.util.Arrays;
 import org.jdom.Element;
 
 public class UnitSlideProjector extends Unit
@@ -87,6 +86,7 @@ public class UnitSlideProjector extends Unit
 	 * Gets the JDOM XML Element that represents this Unit.
 	 * @return	The JDOM XML Element that describes this Unit
 	 */
+	@Override
 	public Element getXML()
 	{
 		Element unitElement = super.getXML();

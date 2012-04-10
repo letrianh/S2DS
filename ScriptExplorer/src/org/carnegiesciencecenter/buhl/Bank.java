@@ -1,12 +1,9 @@
 package org.carnegiesciencecenter.buhl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jdom.*;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 
 public class Bank implements Comparable
 {	
@@ -113,6 +110,7 @@ public class Bank implements Comparable
 	 * Returns the name of this Bank.
 	 * @return The name of the Bank
 	 */
+	@Override
 	public String toString()
 	{
 		return bankName;

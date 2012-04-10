@@ -90,6 +90,7 @@ public class UnitSlew extends Unit
 	 * Gets the JDOM XML Element that represents this Unit.
 	 * @return	The JDOM XML Element that describes this Unit
 	 */
+	@Override
 	public Element getXML()
 	{
 		Element unitElement = super.getXML();

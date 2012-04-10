@@ -3,8 +3,6 @@
  */
 package org.carnegiesciencecenter.buhl;
 
-import java.util.HashMap;
-
 /**
  * @author Anh Le
  *
