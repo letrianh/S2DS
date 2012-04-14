@@ -27,7 +27,8 @@ enum DsCmdTypes {
 	OTHER,		// regular commands
 	TIME_DEBUG,	// fake command 'TIME_DEBUG
 	TIME_ADJUST,// fake command '#
-	TIME_FLEX	// fake command 'TIME_FLEX
+	TIME_FLEX,	// fake command 'TIME_FLEX
+	TIME_CUT	// to mark to cmd where the sequence was cut
 }
 
 public class DsCmd implements Comparable<DsCmd> {
@@ -126,13 +127,25 @@ public class DsCmd implements Comparable<DsCmd> {
 				return;
 			}
 			else if (line.startsWith("'#")) {	// ex: '#01:23:45.67
-				type = DsCmdTypes.TIME_ADJUST;
-				action = "01" + line.substring(4, 13);
-				return;
+				if (ScriptExplorer.globalConf.getParam("COMMON", "ALLOW_TIME_ADJUST").toUpperCase().compareTo("YES") == 0) {
+					type = DsCmdTypes.TIME_ADJUST;
+					action = "01" + line.substring(4, 13);
+					return;
+				}
+				else {
+					type = DsCmdTypes.COMMENT;
+					return;
+				}
 			}
 			else if (line.startsWith("'TIME_FLEX")) {	// ex: 'TIME_FLEX
-				type = DsCmdTypes.TIME_FLEX;
-				return;
+				if (ScriptExplorer.globalConf.getParam("COMMON", "ALLOW_TIME_ADJUST").toUpperCase().compareTo("YES") == 0) {
+					type = DsCmdTypes.TIME_FLEX;
+					return;
+				}
+				else {
+					type = DsCmdTypes.COMMENT;
+					return;
+				}
 			}
 			else
 				type = DsCmdTypes.COMMENT;

@@ -293,7 +293,7 @@ public class MainWindow extends JFrame implements ActionListener {
       			  "Cut time point",
       			  JOptionPane.QUESTION_MESSAGE);
         	if (response != null) {
-        		se.output = se.generateOutput(se.cutSequence(Clock.timeValue("01:"+response), 99999999, se.allCmds));
+        		se.output = se.generateOutput(se.cutSequence(Clock.timeValue("01:"+response), 99999999, se.allCmds), 1);
         		dsTextArea.setText(se.output);
         	}
         }

@@ -479,15 +479,16 @@ public class ScriptExplorer {
 	    adjustTapeValue(allCmds);
 
 	    // generate output
-	    output = generateOutput(allCmds);
+	    output = generateOutput(allCmds, 0);
 	    return 0;
 	}
 	
-	public String generateOutput(ArrayList<DsCmd> list) {
+	public String generateOutput(ArrayList<DsCmd> list, int maxDelay) {
 		Iterator<DsCmd> it = list.iterator();
 	    int oldTime = 0;
 		StringBuilder sb = new StringBuilder();
 		double queue = 0;
+		boolean maxDelayNotUsed = false;
 	    while(it.hasNext()) {
 	    	DsCmd c = it.next();
 	    	if (c.type == DsCmdTypes.SPICESTOP)	// the STOP command was assigned a large exec time to make sure it happens at the end of block
@@ -497,11 +498,16 @@ public class ScriptExplorer {
 	    		if (c.type != DsCmdTypes.COMMENT && c.type != DsCmdTypes.EMPTY) {
 	    			timeDiff += queue;
 		    		timeDiff /= 100;
-		    		sb.append(formatWaitTime(timeDiff));
+		    		if (maxDelay == 0 || maxDelayNotUsed)
+		    			sb.append(formatWaitTime(timeDiff));
+		    		else
+		    			sb.append(formatWaitTime(timeDiff > maxDelay ? maxDelay : timeDiff));
 			    	queue = 0;
 	    		}
 			    else
 			    	queue += timeDiff;
+	    		if (c.type == DsCmdTypes.TIME_CUT)
+	    			maxDelayNotUsed = true;
 	    	}
 
 	    	if (c.type != DsCmdTypes.WAIT) { // Will not output line with delay only
@@ -573,15 +579,19 @@ public class ScriptExplorer {
 		int insTime;
 		newList.add(DsCmd.cmdJboxAdd(0, 0, getSoundFileName()));
 		newList.add(DsCmd.cmdJboxVol(0, 100, 100));
-		if (lastCmd != null && lastCmd.currentTapeRunning) {
-			insTime = lastCmd.timeBegin - (lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - fromTime);
-			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, fromTime - 360000));
-			newList.add(DsCmd.cmdJboxPlay(lastCmd.superOrder, insTime)); 
+		if (lastCmd != null) {
+			if (lastCmd.currentTapeRunning) {
+				insTime = lastCmd.timeBegin - (lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - fromTime);
+				newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, fromTime - 360000));
+				newList.add(DsCmd.cmdJboxPlay(lastCmd.superOrder, insTime)); 
+			}
+			else {
+				insTime = lastCmd.timeBegin;
+				newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - 360000));
+			}
+			newList.get(newList.size()-1).type = DsCmdTypes.TIME_CUT;
 		}
-		else {
-			insTime = lastCmd.timeBegin;
-			newList.add(DsCmd.cmdJboxGoto(lastCmd.superOrder, insTime - 100, lastCmd.currentTapeValue - lastCmd.currentTapeAudioDiff - 360000));
-		}
+		
 		sortByTime(newList);
 		return newList;
 	}
