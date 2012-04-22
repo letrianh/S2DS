@@ -202,9 +202,62 @@ public class DeviceManager {
 		return 100*Integer.parseInt(s);
 	}
 	
+	private int makeFly(int sec, int t0, int T, String action) {
+		String param[] = action.split(",");
+		String src[] = param[0].split(" ");
+		String proj = src[0];
+		String projCh = src[1];
+		String zoom = param[2];
+		String pos[] = param[1].split(" ");
+		String dest = pos[0];
+		String destCh = "";
+		
+		SlewProjector p = getSlewProjector(proj, projCh);
+		p.setClock(sec, t0);
+		p.zoomMotor.setClock(sec, t0);
+		p.xSlew.setClock(sec, t0);
+		p.ySlew.setClock(sec, t0);
+		int z;
+		if (zoom.compareTo("?") == 0)
+			z = p.zoomMotor.getStatus().zoomLevel;
+		else
+			z = Integer.parseInt(zoom);
+		
+		// format: MAKE_FLY(<fly time>,<slew projector>,SLEW <x> <y> [<projector> <channel>],<zoom>)
+		if (dest.compareTo("SLEW") == 0 && pos.length > 3) {
+			dest = pos[3];
+			destCh = pos[4];
+		}
+		
+		if (dest.compareTo("SLEW") == 0) {	// emulate SLEW and MOTOR
+			if (pos[1].compareTo("?") != 0)
+				p.xSlew.flyTo(T, Integer.parseInt(pos[1]), true);
+			if (pos[2].compareTo("?") != 0)
+				p.ySlew.flyTo(T, Integer.parseInt(pos[2]), true);
+			p.zoomMotor.setZoom(T, z);
+		}
+		else if (dest.compareTo("COOR") == 0) {	// fly to a specified position
+			p.xSlew.flyToV(T, Double.parseDouble(pos[1]), true);
+			p.ySlew.flyToV(T, Double.parseDouble(pos[2]), true);
+			p.zoomMotor.setZoom(T, z);
+		}
+		else {	// fly to the position of a projector
+			Projector d = (Projector)getDevice(dest, destCh);
+			p.xSlew.flyToV(T, d.DEFAULT_AZIMUTH, true);
+			p.ySlew.flyToV(T, d.DEFAULT_ELEVATION, true);
+			p.zoomMotor.setZoom(T, z);
+		}
+		return 0;
+	}
+	
 	int executeCommand(SpiceCmd c) {
 		//for debug
-		System.out.println(c.wholeLine);
+		System.out.println("DeviceManager: " + c.wholeLine);
+		
+		if (c.deviceName == "FLYER") {
+			makeFly(c.sectionNum, c.timeBegin, toTime(c.duration), c.action);
+			return 0;
+		}
 		
 		ArrayList<AbstractDevice> list = getDeviceSet(c.deviceName, c.channelNames);
 		if (devTypeByName(c.deviceName) == DeviceTypes.SLIDE_PROJECTOR ||

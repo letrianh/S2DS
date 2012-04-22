@@ -16,6 +16,7 @@ public class Slew extends AbstractDevice {
 	double minPosition, maxPosition;
 	double minValue, maxValue;
 	double tripTime = 1000; 	// time (hundredth of sec) to rotate from 0 to 4095
+	double currentV;
 
 	Slew(String name, String ch, ArrayList<DeviceStatus> l) {
 		super(name, ch, new SlewStatus(), l);
@@ -34,16 +35,18 @@ public class Slew extends AbstractDevice {
 		return (val-minValue)/(maxValue-minValue);
 	}
 	
+	// return degree
 	public double toValue(double position) {
 		return minValue + (maxValue-minValue)*fracPos(position);
 	}
 		
+	// return a number from 0 to 4095
 	public double toPosition(double value) {
 		return minPosition + (maxPosition-minPosition)*fracVal(value);
 	}
 	
 	public double getValue() {
-		return toValue(getStatus().position);
+		return currentV;
 	}
 		
 	public void setPosition(int S, int n, boolean waitForPeer) {
@@ -54,6 +57,35 @@ public class Slew extends AbstractDevice {
 			S = 100;
 		int T = (int) (Math.abs(getStatus().position-n)/((maxPosition-minPosition)/tripTime*(((double)S)/100)));
 		getStatus().position = n;
+		currentV = toValue(n);
+		if (!waitForPeer)
+			currentProjector.repaint(getStatus().atTime, T);
+		getStatus().atTime += T;
+		
+		getStatus().state = DeviceState.END_TRANSITION;
+		this.recordStatus();
+	}
+
+	public void flyTo(int T, int n, boolean waitForPeer) {
+		getStatus().state = DeviceState.BEGIN_TRANSITION;
+		this.recordStatus();
+
+		getStatus().position = n;
+		currentV = toValue(n);
+		if (!waitForPeer)
+			currentProjector.repaint(getStatus().atTime, T);
+		getStatus().atTime += T;
+		
+		getStatus().state = DeviceState.END_TRANSITION;
+		this.recordStatus();
+	}
+
+	public void flyToV(int T, double v, boolean waitForPeer) {
+		getStatus().state = DeviceState.BEGIN_TRANSITION;
+		this.recordStatus();
+
+		getStatus().position = toPosition(v);
+		currentV = v;
 		if (!waitForPeer)
 			currentProjector.repaint(getStatus().atTime, T);
 		getStatus().atTime += T;

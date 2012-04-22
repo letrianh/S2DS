@@ -23,6 +23,7 @@ enum SpiceCmdTypes {
 	AUDIO_JUMP, 
 	OTHER, 
 	TIME_DEBUG, 
+	MAKE_FLY,
 	UNKNOWN
 }
 
@@ -86,6 +87,14 @@ public class SpiceCmd {
 		}
 		else if (action.startsWith("'WAVE_JUMP:")) {
 			type = SpiceCmdTypes.AUDIO_JUMP;
+			return;
+		}
+		else if (action.startsWith("'MAKE_FLY")) {
+			type = SpiceCmdTypes.OTHER;
+			duration = wholeLine.substring(wholeLine.indexOf("(")+1, wholeLine.indexOf(","));
+			timeDuration = Integer.parseInt(duration);
+			action = wholeLine.substring(wholeLine.indexOf(",")+1, wholeLine.indexOf(")")).toUpperCase();
+			deviceName = "FLYER";
 			return;
 		}
 		else
