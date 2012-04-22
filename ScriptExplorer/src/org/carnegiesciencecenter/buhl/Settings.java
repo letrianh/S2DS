@@ -21,7 +21,8 @@ public class Settings {
 	}
 	
 	public void loadSettings(String fileName) {
-		String sectionName;
+		String sectionName = "";
+		String orgSectionName = "";
 		try {
 			File f = new File(fileName);
 			System.out.println("Reading file: " + f.getAbsolutePath());
@@ -37,6 +38,19 @@ public class Settings {
 					continue;
 				if (s.startsWith("[")) {	// new section
 					sectionName = s.substring(1, s.indexOf("]")).trim().toUpperCase();
+					orgSectionName = sectionName;
+					if (conf.containsKey(sectionName)) {
+						System.out.println("Update existing section: [" + sectionName + "]");
+						section = conf.get(sectionName);
+					}
+					else {
+						System.out.println("Adding new section: [" + sectionName + "]");
+						section = new HashMap<String,String>();
+						conf.put(sectionName, section);
+					}
+				}
+				else if (s.startsWith("<")) {	// new overwritting section
+					sectionName = orgSectionName + "@" + s.substring(1, s.indexOf(">")).trim().toUpperCase();
 					if (conf.containsKey(sectionName)) {
 						System.out.println("Update existing section: [" + sectionName + "]");
 						section = conf.get(sectionName);

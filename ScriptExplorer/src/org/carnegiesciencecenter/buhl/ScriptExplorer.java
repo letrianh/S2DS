@@ -60,7 +60,14 @@ public class ScriptExplorer {
 		SHOW_CONF = globalConf.getParam("COMMON", "SHOW_CONF");
 		if (SHOW_CONF.length() != 0) {
 			globalConf.overwriteSettings(SHOW_CONF, "COMMON");
-		}		
+			String overwriteList = globalConf.getParam("COMMON", "OVERWRITE");
+			if (overwriteList.length() != 0) {
+				String sec[] = overwriteList.split(" ");
+				for (int i=0; i<sec.length; i++) {
+					globalConf.overwriteSettings(SHOW_CONF + "@" + sec[i], sec[i]);
+				}
+			}
+		}
 		String ENV = globalConf.getParam("COMMON", "OS");
 		if (ENV.length() != 0) {
 			globalConf.overwriteSettings(ENV, "COMMON");
