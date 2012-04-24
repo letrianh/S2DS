@@ -38,6 +38,18 @@ public class Motor extends AbstractDevice {
 		this.recordStatus();
 	}
 	
+	public void setZoomNaturally(int T, int n) {
+		getStatus().state = DeviceState.BEGIN_TRANSITION;
+		this.recordStatus();
+
+		getStatus().zoomLevel = n;
+		currentProjector.repaintNaturally(getStatus().atTime, T);
+		getStatus().atTime += T;
+		
+		getStatus().state = DeviceState.END_TRANSITION;
+		this.recordStatus();
+	}
+	
 	public double getWidth() {
 		return minWidth+(getStatus().zoomLevel-minPosition)/(maxPosition-minPosition)*(maxWidth-minWidth);
 	}

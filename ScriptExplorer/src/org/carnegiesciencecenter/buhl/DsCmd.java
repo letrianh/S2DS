@@ -213,6 +213,14 @@ public class DsCmd implements Comparable<DsCmd> {
 		return String.format("Text Locate \"%s\" %.2f %.2f %.2f %.2f %.2f %.2f\n", name, ((double)T)/100, A, E, R, W, H); 
 	}
 
+	static public String formatLocateNaturally(String name, double T, double A, double E, double R, double W, double H) {
+		double T1,T2,T3,dT = 1.5;
+		T = T/100.0;
+		T1 = T3 = (T/3.0 <= dT ? T/3.0 : dT);
+		T2 = T - T1 -T3;
+		return String.format("Text Locate \"%s\" [%.2f:%.2f:%.2f] %.2f %.2f %.2f %.2f %.2f\n", name, T1, T2, T3, A, E, R, W, H); 
+	}
+
 	static public String formatAddImage(String name, String fileName, double W, double H, double M, double XO, double YO) {
 		return String.format("Text Add \"%s\" \"%s\" %.2f %.2f \"local\" %.2f %.2f %.2f %.2f %.2f black\n", name, fileName, W, H, M, XO, YO, 0.0, 0.0); 
 	}
@@ -283,6 +291,18 @@ public class DsCmd implements Comparable<DsCmd> {
 			}
 		}
 		return new DsCmd(num, time, "TEXT", "LOCATE", DsCmdTypes.OTHER, formatLocate(name, T, A, E, R, W, H));
+	}
+
+	static public DsCmd cmdLocateNaturally(int num, int time, String name, double T, double A, double E, double R, double W, double H) {
+		if (isAutoOrientation) {
+			Dimension dim = imageList.get(name);
+			if (dim != null && dim.width<dim.height) {
+				double tmp = W;
+				W = H;
+				H = tmp;
+			}
+		}
+		return new DsCmd(num, time, "TEXT", "LOCATE", DsCmdTypes.OTHER, formatLocateNaturally(name, T, A, E, R, W, H));
 	}
 
 	static public DsCmd cmdAddImage(int num, int time, String name, String fileName, double W, double H, double M, double XO, double YO) {

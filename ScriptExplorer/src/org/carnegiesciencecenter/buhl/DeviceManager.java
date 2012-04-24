@@ -234,18 +234,18 @@ public class DeviceManager {
 				p.xSlew.flyTo(T, Integer.parseInt(pos[1]), true);
 			if (pos[2].compareTo("?") != 0)
 				p.ySlew.flyTo(T, Integer.parseInt(pos[2]), true);
-			p.zoomMotor.setZoom(T, z);
+			p.zoomMotor.setZoomNaturally(T, z);
 		}
 		else if (dest.compareTo("COOR") == 0) {	// fly to a specified position
 			p.xSlew.flyToV(T, Double.parseDouble(pos[1]), true);
 			p.ySlew.flyToV(T, Double.parseDouble(pos[2]), true);
-			p.zoomMotor.setZoom(T, z);
+			p.zoomMotor.setZoomNaturally(T, z);
 		}
 		else {	// fly to the position of a projector
 			Projector d = (Projector)getDevice(dest, destCh);
 			p.xSlew.flyToV(T, d.DEFAULT_AZIMUTH, true);
 			p.ySlew.flyToV(T, d.DEFAULT_ELEVATION, true);
-			p.zoomMotor.setZoom(T, z);
+			p.zoomMotor.setZoomNaturally(T, z);
 		}
 		return 0;
 	}

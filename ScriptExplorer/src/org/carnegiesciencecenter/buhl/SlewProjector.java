@@ -31,6 +31,13 @@ public class SlewProjector extends SlideProjector {
 				DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
 	}
 	
+	public void repaintNaturally(int t0, int T) {
+		updateViewPosition();
+		getStatus().atTime = t0;
+		DeviceManager.equivCmds.add(DsCmd.cmdLocateNaturally(getStatus().clockId, getStatus().atTime, objName(), T, 
+				DEFAULT_AZIMUTH, DEFAULT_ELEVATION, DEFAULT_ROTATION, DEFAULT_WIDTH, DEFAULT_HEIGHT));
+	}
+	
 	public void setup(Slew x, Slew y, Motor m) {
 		zoomMotor = m;
 		xSlew = x;
